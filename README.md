@@ -1,0 +1,51 @@
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+# VARIABILIDADE ESPAÇOTEMPORAL DAS REMOÇÕES DE CO₂ POR ECOSSISTEMAS FLORESTAIS BRASILEIROS (2021–2023)
+
+Repositório de apoio ao projeto de pesquisa de mestrado com foco na
+análise espacial e temporal das remoções de dióxido de carbono (CO₂)
+pela biomassa viva de ecossistemas florestais brasileiros, no período de
+2021 a 2023, com base em dados da plataforma Climate
+[TRACE/CTrees](https://climatetrace.org/).
+
+## 👨‍🔬 Autores
+
+- **Pedro Barbieri Durigan**  
+  Mestrando em Agronomia - Ciência do Solo - FCAV/Unesp Email:
+  [pedro.durigan@unesp.br](mailto:pedro.durigan@unesp.b)
+
+- **Prof. Dr. Newton La Scala Júnior**  
+  Coorientador — Departamento de Ciências Exatas - FCAV/Unesp Email:
+  <la.scala@unesp.br>
+
+- **Prof. Dr. Alan Rodrigo Panosso**  
+  Coorientador — Departamento de Ciências Exatas - FCAV/Unesp Email:
+  <alan.panosso@unesp.br>
+
+## 📁 Etapas do Projeto
+
+Os scripts abaixo foram desenvolvidos em RMarkdown e estão disponíveis
+em formato HTML:
+
+- [`01_aquisicao_dados`](https://arpanosso.github.io//mestrado-durigan-remocoes-co2//01_aquisicao_dados.html)
+  – Aquisição e download dos dados brutos.  
+- [`02_tratamento_dados`](scripts/02_tratamento_dados.html) – Faxina,
+  filtragem e organização dos dados.  
+- [`03_preprocessamento`](scripts/03_preprocessamento.html) – Preparação
+  dos dados para análise.
+
+## 🔍 **Análise Exploratória dos Dados**
+
+Visualizações gráficas, estatísticas descritivas e inspeção de padrões
+regionais e temporais.
+
+## 🧪 **Estatística Multivariada**
+
+Técnicas como Análise de Componentes Principais (PCA), agrupamentos
+(clustering) e correlações espaciais.
+
+## 🤖 **Modelagem Estatística e Preditiva**
+
+Aplicação de modelos de regressão, aprendizado de máquina e análise de
+variáveis importantes para a predição das remoções de CO₂.
