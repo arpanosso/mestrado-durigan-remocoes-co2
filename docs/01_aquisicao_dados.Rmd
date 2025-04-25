@@ -9,22 +9,25 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+## 📥 Introdução
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+Este tutorial mostra como acessar manualmente os dados do Climate TRACE/CTrees pela internet, realizando o download direto via navegador.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+## 🌐 Acessando a Plataforma
 
-```{r cars}
-summary(cars)
-```
+### 1. Acesse o site oficial: [https://climatetrace.org](https://climatetrace.org)
 
-## Including Plots
+![](../img/ct_tutorial_01.jpg)
 
-You can also embed plots, for example:
+### 2. No menu lateral, superior esquerdo, clique em **"Data Downloads"**.
 
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
+![](../img/ct_tutorial_02.jpg)
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+3. Navegue até **"View downloads by"** e escolha a opção **"Country"**. 
+
+![](../img/ct_tutorial_03.jpg)
+
+
+## 💡 Acessando por API
+
+...implementação Pedro
