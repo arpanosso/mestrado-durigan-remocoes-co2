@@ -355,31 +355,359 @@ display: none;
 </div>
 
 
-<div id="r-markdown" class="section level2">
-<h2>R Markdown</h2>
-<p>This is an R Markdown document. Markdown is a simple formatting
-syntax for authoring HTML, PDF, and MS Word documents. For more details
-on using R Markdown see <a href="http://rmarkdown.rstudio.com" class="uri">http://rmarkdown.rstudio.com</a>.</p>
-<p>When you click the <strong>Knit</strong> button a document will be
-generated that includes both content as well as the output of any
-embedded R code chunks within the document. You can embed an R code
-chunk like this:</p>
-<pre class="r"><code>summary(cars)</code></pre>
-<pre><code>##      speed           dist       
-##  Min.   : 4.0   Min.   :  2.00  
-##  1st Qu.:12.0   1st Qu.: 26.00  
-##  Median :15.0   Median : 36.00  
-##  Mean   :15.4   Mean   : 42.98  
-##  3rd Qu.:19.0   3rd Qu.: 56.00  
-##  Max.   :25.0   Max.   :120.00</code></pre>
+<div id="sobre-os-dados" class="section level3">
+<h3>📄 Sobre os Dados</h3>
+<p>Permissões e Uso: Todos os dados do Climate TRACE estão disponíveis
+gratuitamente sob a Licença Pública Internacional Creative Commons
+Atribuição 4.0, salvo indicação em contrário.</p>
+<p>Forma sugerida de citação: Para fontes de diferentes setores ou dados
+globais acessados e baixados, utilize a seguinte citação: Climate TRACE
+(2025). Climate TRACE Emissions Inventory v4.2.0. Disponível em: <a href="https://climatetrace.org" class="uri">https://climatetrace.org</a>. Acessado em: [inserir data de
+acesso].</p>
+<p>Para citações específicas por setor, consulte a seção correspondente
+na plataforma.</p>
 </div>
-<div id="including-plots" class="section level2">
-<h2>Including Plots</h2>
-<p>You can also embed plots, for example:</p>
-<p><img role="img" src="data:image/png;base64,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" width="672" /></p>
-<p>Note that the <code>echo = FALSE</code> parameter was added to the
-code chunk to prevent printing of the R code that generated the
-plot.</p>
+<div id="arquivos-disponíveis" class="section level3">
+<h3>📁 Arquivos Disponíveis</h3>
+<p>A seguir, uma breve descrição dos arquivos incluídos no pacote de
+dados baixado da plataforma Climate TRACE:</p>
+<ul>
+<li><p><code>detailed_data_schema.csv</code> - Arquivo com o mapeamento
+e a explicação do significado de cada coluna dos dados para todos os
+diferentes subsetores.</p></li>
+<li><p><code>&lt;nome-do-subsetor&gt;_emissions_sources.csv</code> -
+Contém os dados de emissões no nível de fonte de emissão para todos os
+subsetores monitorados pela Climate TRACE.</p></li>
+<li><p><code>&lt;nome-do-subsetor&gt;_country_emissions.csv</code> -
+Contém os dados de emissões no nível de país para todos os subsetores
+monitorados pela Climate TRACE.</p></li>
+<li><p><code>&lt;nome-do-subsetor&gt;_emissions_sources_confidence.csv</code>
+- Arquivo que especifica a classificação de confiança dos dados
+reportados pelas fontes de emissão, referenciando o arquivo
+<subsetor>_emissions_sources.csv.</p></li>
+<li><p><code>&lt;nome-do-subsetor&gt;_emissions_sources_ownership.csv</code>
+- Contém informações sobre a propriedade das fontes de emissão listadas
+no arquivo <code>&lt;subsetor&gt;_emissions_sources.csv.</code></p></li>
+</ul>
+<p>🔗 Observação: A lista completa de setores de emissão para os quais a
+Climate TRACE fornece dados está disponível no site: <a href="https://climatetrace.org/sectors" class="uri">https://climatetrace.org/sectors</a>.</p>
+<p>Para alguns setores, há dados geoespaciais adicionais não incluídos
+neste pacote de download. Para solicitá-los, entre em contato pelo
+e-mail: <a href="mailto:coalition@climatetrace.org" class="email">coalition@climatetrace.org</a>.</p>
+</div>
+<div id="sobre-os-dados-1" class="section level3">
+<h3>📄 Sobre os Dados</h3>
+<p>Para mais informações sobre a origem, metodologia e estrutura dos
+dados utilizados, acesse o documento oficial disponibilizado pela
+Climate TRACE:</p>
+<p>📥 Clique aqui para baixar o arquivo <a href="https://arpanosso.github.io//mestrado-durigan-remocoes-co2//about_the_data.pdf">about_the_data.pdf</a>
+e <a href="https://arpanosso.github.io//mestrado-durigan-remocoes-co2//about_the_data_v4_2_0.pdf">about_the_data_v4_2_0.pdf</a></p>
+</div>
+<div id="encontrando-os-arquivos-.csv" class="section level3">
+<h3>🔍📁 Encontrando os arquivos <code>.csv</code></h3>
+<pre class="r"><code>tbl_directorys &lt;- as_tibble(
+  list.files(&quot;data-raw/BRA/&quot;,
+             full.names = TRUE,
+             recursive = TRUE)) %&gt;%
+  filter(str_detect(value, &quot;emissions_sources.csv&quot;))
+
+# Extraindo os caminhos dos arquvios
+value &lt;- tbl_directorys %&gt;% pull(value)
+
+# Mapeando Transportation -------------------------------------------------
+trans_values &lt;- tbl_directorys %&gt;%
+  filter(str_detect(value,&quot;transportation&quot;)) %&gt;%
+  pull(value)
+
+# Contando as linhas dos arquivos
+# row_count &lt;- function(sector_name){
+#   read.csv(sector_name) %&gt;%
+#     nrow()
+# }
+# row_count(value[1])
+# map_dbl(value, row_count) %&gt;% sum
+
+# Atualizando o banco todo ------------------------------------------------
+# Empilhando todos os arquivos no objeto dados
+# my_file_read(value[1])
+dados &lt;- map_dfr(value, my_file_read)
+glimpse(dados)
+
+# Numéro de posições no caminho divididas por &quot;/&quot;
+n_position &lt;- ncol(str_split(tbl_directorys[1,1],&quot;/&quot;,simplify = TRUE))
+
+
+# Tratanto as colunas de data, nome de setores e sub setores
+dados &lt;- dados %&gt;%
+  mutate(
+    start_time = as_date(start_time),
+    end_time = as_date(end_time),
+    created_date = as_date(created_date),
+    modified_date = as_date(modified_date),
+    year = lubridate::year(end_time)
+  ) %&gt;%
+  mutate(
+    sector_name = str_split(directory,
+                            &quot;/&quot;,
+                            simplify = TRUE)[,n_position -1],
+    sub_sector = str_split(directory,
+                           &quot;/&quot;,
+                           simplify = TRUE)[,n_position],
+    sub_sector = str_remove(sub_sector,&quot;_emissions_sources.csv|_country_emissions.csv&quot;)
+  )
+dados$sector_name %&gt;% unique()
+dados$sub_sector %&gt;% unique()
+dados$year %&gt;% table()
+
+
+# agrupando a base por nome e coordenada
+# Classificando o ponto em um estado
+base_sigla_uf &lt;- dados %&gt;%
+  group_by(source_name, lon, lat) %&gt;%
+  summarise(
+    ano = mean(year)
+  ) %&gt;%
+  mutate(
+    sigla_uf = get_geobr_state(lon,lat),
+    biome = get_geobr_biomes(lon,lat),
+    flag_conservation = get_geobr_conservation(lon,lat),
+    flag_indigenous = get_geobr_indigenous(lon,lat)
+  )
+
+### testando flag_indigenous
+# base_sigla_uf %&gt;%
+#   filter(flag_indigenous) %&gt;%
+#   ggplot(aes(x=lon,y=lat))+
+#   geom_point()
+
+# indigenous   %&gt;%
+#   ggplot() +
+#   geom_sf(fill=&quot;white&quot;, color=&quot;black&quot;,
+#           size=.15, show.legend = FALSE) +
+#   geom_point(
+#     data = base_sigla_uf %&gt;%
+#       filter(flag_indigenous),
+#     aes(lon,lat))
+
+
+### testando flag_conservation
+# base_sigla_uf %&gt;%
+#   filter(flag_conservation) %&gt;%
+#   ggplot(aes(x=lon,y=lat))+
+#   geom_point()
+
+# conservation   %&gt;%
+#   ggplot() +
+#   geom_sf(fill=&quot;white&quot;, color=&quot;black&quot;,
+#           size=.15, show.legend = FALSE) +
+#   geom_point(
+#     data = base_sigla_uf %&gt;%
+#       filter(flag_conservation),
+#     aes(lon,lat))
+
+### testando classificação por bioma
+# base_sigla_uf %&gt;%
+#   ggplot(aes(x=lon,y=lat,col=biome))+
+#   geom_point()
+# base_sigla_uf$biome %&gt;% unique() == &quot;Amazônia&quot;
+#
+# base_sigla_uf %&gt;%
+#   mutate(
+#     biome_n = biome == &quot;Amazônia&quot;
+#   ) %&gt;% glimpse()
+
+### Arrumando classificação
+# base_sigla_uf %&gt;%
+#   mutate(
+#     biome_n = case_when(
+#         biome==&#39;Other&#39;&amp; lon&gt;= -45 &amp; lat &lt; -6~&#39;AF&#39;,
+#         biome == &quot;Amazônia&quot; ~ &quot;AMZ&quot;,
+#         biome==&#39;Other&#39;&amp; lon&lt; -45 &amp; lat &gt;=-10 ~&#39;AMZ&#39;,
+#         biome == &#39;Mata Atlântica&#39; &amp; lon&gt; -40 &amp; lat &lt; -20 ~&#39;Other&#39;,
+#         biome == &#39;Mata Atlântica&#39; &amp; lon&gt; -34 &amp; lat &gt; -5 ~&#39;Other&#39;,
+#         biome == &#39;Mata Atlântica&#39; ~ &#39;AF&#39;,
+#         biome==&#39;Cerrado&#39;~&#39;CERR&#39;,
+#         biome ==&#39;Pampa&#39;~&#39;PMP&#39;,
+#         biome == &#39;Pantanal&#39; ~ &#39;PNT&#39;,
+#         biome==&#39;Caatinga&#39;~&#39;CAAT&#39;,
+#         TRUE ~ &#39;Other&#39;
+#       )
+#   ) %&gt;%
+#   ggplot(aes(x=lon,y=lat,color=biome_n))+
+#   geom_point()
+
+base_sigla_uf &lt;- base_sigla_uf %&gt;%
+  mutate(
+    biomes =
+      case_when(
+        biome==&#39;Other&#39;&amp; lon&gt;=-45 &amp; lat &lt;0~&#39;AF&#39;,
+        biome==&#39;Amazônia&#39;~&#39;AMZ&#39;,
+        biome==&#39;Other&#39;&amp; lon&lt; -45 &amp; lat &gt;=-10 ~&#39;AMZ&#39;,
+        biome == &#39;Mata Atlântica&#39; &amp; lon&gt; -40 &amp; lat &lt; -20 ~&#39;Other&#39;,
+        biome == &#39;Mata Atlântica&#39; &amp; lon&gt; -34 &amp; lat &gt; -5 ~&#39;Other&#39;,
+        biome == &#39;Mata Atlântica&#39; ~ &#39;AF&#39;,
+        biome==&#39;Cerrado&#39;~&#39;CERR&#39;,
+        biome ==&#39;Pampa&#39;~&#39;PMP&#39;,
+        biome == &#39;Pantanal&#39; ~ &#39;PNT&#39;,
+        biome==&#39;Caatinga&#39;~&#39;CAAT&#39;,
+        .default = &#39;Other&#39;
+      )
+    )
+
+# base_sigla_uf %&gt;%
+#   ggplot(aes(x=lon,y=lat,col=biomes))+
+#   geom_point()
+
+###
+# Classificando pelo pol da cidade ----------------------------------------
+base_sigla_uf$sigla_uf %&gt;% unique()
+citys &lt;- geobr::read_municipality()
+resul &lt;- vector()
+estado &lt;- base_sigla_uf$sigla_uf
+tictoc::tic()
+for(i in 1:nrow(base_sigla_uf)){
+  if(estado[i]!=&quot;Other&quot;){
+    my_citys_obj &lt;- citys %&gt;%
+      filter(abbrev_state == estado[i])
+    n_citys &lt;- nrow(my_citys_obj)
+    my_citys_names &lt;- my_citys_obj %&gt;% pull(name_muni)
+    resul[i] &lt;- &quot;Other&quot;
+    for(j in 1:n_citys){
+      pol_city &lt;- my_citys_obj$geom  %&gt;%
+        purrr::pluck(j) %&gt;%
+        as.matrix()
+      if(def_pol(base_sigla_uf$lon[i],
+                 base_sigla_uf$lat[i],
+                 pol_city)){
+        resul[i] &lt;- my_citys_names[j]
+      }
+    }
+  }
+}
+tictoc::toc()
+base_sigla_uf$city_ref &lt;- resul
+
+get_geobr_city_n &lt;- function(x, y, estado){
+  my_citys_obj &lt;- citys %&gt;%
+    tibble() %&gt;%
+    filter(abbrev_state == estado)
+  n_citys &lt;-  my_citys_obj %&gt;% nrow()
+  return(n_citys)
+};get_geobr_city_n(-47.2, -23.1,&quot;SP&quot;)
+
+get_geobr_city &lt;- function(arg){
+  resul &lt;- &quot;Other&quot;
+    if(!is.na(arg)){
+    arg &lt;- as.vector(as.character(arg))
+    marg &lt;- str_split(arg,&quot; &quot;,simplify = TRUE)
+    n_citys &lt;- marg[1,1] %&gt;% as.numeric()
+    x &lt;- marg[1,2] %&gt;% as.numeric()
+    y &lt;- marg[1,3] %&gt;% as.numeric()
+    estado &lt;- marg[1,4]
+    my_citys_obj &lt;- citys %&gt;%
+      tibble() %&gt;%
+      filter(abbrev_state == estado)
+    if(estado != &quot;Other&quot;){
+      my_citys_names &lt;- my_citys_obj %&gt;% pull(name_muni)
+      for(i in 1:n_citys){
+        pol_city &lt;- my_citys_obj$geom  %&gt;%
+          purrr::pluck(i) %&gt;%
+          as.matrix()
+        if(def_pol(x, y, pol_city)){
+          resul &lt;- my_citys_names[i]
+        }
+      }
+    }
+  }
+  return(resul)
+};get_geobr_city(NA)
+
+# tictoc::tic()
+# base_sigla_uf &lt;- base_sigla_uf %&gt;%
+#   group_by(sigla_uf) %&gt;%
+#   nest() %&gt;%
+#   #filter(sigla_uf != &quot;DF&quot;) %&gt;%
+#   mutate(
+#     nr = map(sigla_uf,
+#              ~get_geobr_city_n(data$lon,
+#                                data$lat,
+#                                .x))
+#   ) %&gt;%
+#   unnest(cols = c(data, nr)) %&gt;%
+#   ungroup() %&gt;%
+#   # sample_n(10) %&gt;%
+#   mutate(
+#     list_par = str_c(nr, lon, lat, sigla_uf,sep=&quot; &quot;),
+#   ) %&gt;%
+#   mutate(
+#     city_ref = map(list_par,get_geobr_city)
+#   ) %&gt;%
+#   unnest(cols = c(city_ref_2))
+# tictoc::toc()
+
+# Final da faxina ---------------------------------------------------------
+# lendo arquivo da base nacional
+brazil_ids &lt;- read_rds(&quot;data/df_nome.rds&quot;)
+
+# mesclando as bases
+base_sigla_uf &lt;- left_join(base_sigla_uf,brazil_ids %&gt;%
+            group_by(sigla_uf,nome_regiao) %&gt;%
+            summarise(count=n()) %&gt;%
+            select(sigla_uf,nome_regiao),
+          by = c(&quot;sigla_uf&quot;))
+
+# Mesclando e salvando o arquivo final
+dados_sigla &lt;- left_join(
+  dados,
+  base_sigla_uf %&gt;%
+    ungroup() %&gt;%
+    select(source_name, lon, lat, sigla_uf, nome_regiao, biomes,
+           flag_indigenous, flag_conservation, city_ref),
+  by = c(&quot;source_name&quot;,&quot;lat&quot;,&quot;lon&quot;)
+) %&gt;% as_tibble()
+
+dados_sigla$nome_regiao %&gt;%  unique()
+
+write_rds(dados_sigla %&gt;%
+             rename(biome = biomes), &quot;data/emissions_sources.rds&quot;)
+
+# country data -----------------------------------------------------------------
+# buscando o caminho dos setores
+tbl_directorys &lt;- as_tibble(
+  list.files(&quot;data-raw/BRA/&quot;, full.names = TRUE, recursive = TRUE)) %&gt;%
+  filter(str_detect(value, &quot;country_emissions.csv&quot;))
+
+# Extraindo os caminhos dos arquvios
+value &lt;- tbl_directorys %&gt;% pull(value)
+
+# Empilhando todos os arquivos no objeto dados
+my_file_read(value[1])
+dados_country &lt;- map_dfr(value, my_file_read) %&gt;%
+  as_tibble()
+glimpse(dados_country)
+
+dados_country &lt;- dados_country %&gt;%
+  # filter(gas == &quot;co2e_100yr&quot;) %&gt;%
+  mutate(
+    start_time = as_date(start_time),
+    end_time = as_date(end_time),
+    created_date = as_date(created_date),
+    modified_date = as_date(modified_date),
+    year = lubridate::year(end_time)
+  ) %&gt;%
+  mutate(
+    sector_name = str_split(directory,
+                            &quot;/&quot;,
+                            simplify = TRUE)[,3],
+    sector_name = str_remove(sector_name,&quot;_country_emissions.csv&quot;)
+  )
+
+dados_country$directory[1]
+
+dados_country %&gt;%
+  select( sector_name ) %&gt;%
+  distinct()
+write_rds(dados_country, &quot;data/country_emissions.rds&quot;)</code></pre>
 </div>
 
 
