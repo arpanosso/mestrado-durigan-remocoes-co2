@@ -1,0 +1,188 @@
+---
+title: "03_preprocessamento.html"
+output: html_document
+date: "2025-04-26"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      message = FALSE, 
+                      error = FALSE, 
+                      warning = FALSE)
+```
+## 🛠️ Pré-processamento
+
+Nesta etapa, vamos realizar um pré-processamento mais refinado dos dados, que inclui: visualização espacial dos pontos para identificar padrões geográficos e possíveis inconsistências de localização; Filtragem de Linhas e Variáveis e Seleção de observações e atributos relevantes para as próximas etapas da análise; Detecção de Inconsistências: Identificação de valores extremos ou incoerentes que podem comprometer a qualidade das análises futuras.
+
+### 📄 Carregando dados de emissões
+
+```{r}
+emissions_sources <- readr::read_rds("../data/emissions_sources.rds")
+```
+
+### ⏳ Filtrando  os dados  para  forestry-and-land-use e selecionando variáveis para a análise.
+
+```{r}
+emissions_sources_forestry <- emissions_sources |> 
+   dplyr::filter(
+     gas == "co2e_100yr",
+     sector == "forestry-and-land-use"
+   ) |> 
+   dplyr::mutate(
+     source_name = stringr::str_to_title(source_name)
+   ) |> 
+  dplyr::select(
+    -c(source_id,iso3_country,created_date,modified_date,lat_lon,directory,native_source_id,
+       start_time,end_time,source_type,reporting_entity,sector_id,reporting_entity,geometry_ref)) |> 
+  dplyr::relocate(year,month,lon,lat,source_name,muni,state,region)
+visdat::vis_miss(emissions_sources_forestry[
+  sample(1:nrow(emissions_sources_forestry),3e4,),])
+```
+
+### 🗺️ Plotando espacialmente os ponto
+
+Nesta etapa, vamos representar os dados no espaço geográfico, gerando mapas que permitem visualizar a distribuição dos pontos de interesse. A plotagem espacial é fundamental para identificar padrões, áreas de maior concentração e possíveis anomalias nos dados.
+
+Vamos carregar os polígonos de interesse
+
+```{r}
+country_br <- geobr::read_country(showProgress = FALSE)
+conservation <- geobr::read_conservation_units(showProgress = FALSE)
+indigenous <- geobr::read_indigenous_land(showProgress = FALSE)
+```
+
+Criando o mapa com sobreposição
+
+Terras Indígenas reconhecidas
+
+```{r}
+indigenous    |> 
+  ggplot2::ggplot() +
+  ggplot2::geom_sf(fill="white", color="black",
+          size=.15, show.legend = FALSE) +
+  ggplot2::geom_point(
+    data = emissions_sources_forestry  |> 
+      dplyr::filter(
+        year == 2021,
+        indigenous != "Other"),
+     ggplot2::aes(lon,lat)) +
+  ggplot2::theme_bw()
+```
+Áreas de conservação
+
+```{r}
+conservation    |> 
+  ggplot2::ggplot() +
+  ggplot2::geom_sf(fill="white", color="black",
+          size=.15, show.legend = FALSE) +
+  ggplot2::geom_point(
+    data = emissions_sources_forestry  |> 
+      dplyr::filter(
+        year == 2021,
+        conservation != "Other"),
+     ggplot2::aes(lon,lat)) +
+  ggplot2::theme_bw()
+```
+
+### 📊📦 Visualização dos Dados
+
+Nesta seção, serão construídos histogramas e boxplots para avaliar a distribuição das variáveis numéricas disponíveis no conjunto de dados.
+
+ + Histogramas ajudam a identificar o comportamento geral dos dados, como simetria, caudas longas ou concentrações anormais de valores.
+
+ + Boxplots facilitam a visualização de outliers, assimetria e amplitude interquartil (IQR), sendo ferramentas rápidas para checagem da qualidade e integridade dos dados.
+
+A combinação dos dois gráficos para cada variável permite uma análise exploratória robusta e auxilia na identificação de possíveis inconsistências ou necessidades de transformação dos dados para as etapas seguintes.
+
+### emissions_quantity
+
+```{r}
+x <- emissions_sources_forestry |> dplyr::pull(emissions_quantity)
+x <- na.omit(x)
+q1 <- quantile(x,.25)
+q3 <- quantile(x,.75)
+iiq <- q3-q1
+emissions_sources_forestry |>
+  dplyr::select(emissions_quantity,year) |>
+  dplyr::filter(emissions_quantity > q1-1.5*iiq, emissions_quantity<q3+1.5*iiq) |>
+  tidyr::drop_na() |>
+  ggplot2::ggplot(ggplot2::aes(x =emissions_quantity)) +
+  ggplot2::geom_histogram(boundary=0, color="black", fill="gray",
+                          bins = 100) +
+  ggplot2::facet_wrap(~year,scales = "free")+
+  ggplot2::theme_bw()
+```
+### activity
+
+```{r}
+x <- emissions_sources_forestry |> dplyr::pull(activity)
+x <- na.omit(x)
+q1 <- quantile(x,.25)
+q3 <- quantile(x,.75)
+iiq <- q3-q1
+emissions_sources_forestry |>
+  dplyr::select(activity,year) |>
+  dplyr::filter(activity > q1-0.5*iiq, activity<q3*.01) |>
+  tidyr::drop_na() |>
+  ggplot2::ggplot(ggplot2::aes(x =activity)) +
+  ggplot2::geom_histogram(boundary=0, color="black", fill="gray",
+                          bins = 50) +
+  ggplot2::facet_wrap(~year,scales = "free")+
+  ggplot2::theme_bw()
+```
+
+### emissions_factor
+
+```{r}
+x <- emissions_sources_forestry |> dplyr::pull(emissions_factor)
+x <- na.omit(x)
+q1 <- quantile(x,.25)
+q3 <- quantile(x,.75)
+iiq <- q3-q1
+emissions_sources_forestry |>
+  dplyr::select(emissions_factor,year) |>
+  dplyr::filter(emissions_factor > q1-0.5*iiq, emissions_factor<q3+0.5*iiq) |>
+  tidyr::drop_na() |>
+  ggplot2::ggplot(ggplot2::aes(x =emissions_factor)) +
+  ggplot2::geom_histogram(boundary=0, color="black", fill="gray",
+                          bins = 50) +
+  ggplot2::facet_wrap(~year,scales = "free")+
+  ggplot2::theme_bw()
+```
+### capacity
+
+```{r}
+x <- emissions_sources_forestry |> dplyr::pull(capacity)
+x <- na.omit(x)
+q1 <- quantile(x,.25)
+q3 <- quantile(x,.75)
+iiq <- q3-q1
+emissions_sources_forestry |>
+  dplyr::select(capacity,year) |>
+  dplyr::filter(capacity > q1-3.5*iiq, capacity<q3+3.5*iiq) |>
+  tidyr::drop_na() |>
+  ggplot2::ggplot(ggplot2::aes(x =capacity)) +
+  ggplot2::geom_histogram(boundary=0, color="black", fill="gray",
+                          bins = 150) +
+  ggplot2::facet_wrap(~year,scales = "free")+
+  ggplot2::theme_bw()
+```
+
+### capacity_factor
+
+```{r}
+x <- emissions_sources_forestry |> dplyr::pull(capacity_factor)
+x <- na.omit(x)
+q1 <- quantile(x,.25)
+q3 <- quantile(x,.75)
+iiq <- q3-q1
+emissions_sources_forestry |>
+  dplyr::select(capacity_factor,year) |>
+  dplyr::filter(capacity_factor > q1-0.5*iiq, capacity_factor<q3*.001) |>
+  tidyr::drop_na() |>
+  ggplot2::ggplot(ggplot2::aes(x =capacity_factor)) +
+  ggplot2::geom_histogram(boundary=0, color="black", fill="gray",
+                          bins = 50) +
+  ggplot2::facet_wrap(~year,scales = "free")+
+  ggplot2::theme_bw()
+```

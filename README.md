@@ -32,8 +32,8 @@ em formato HTML:
   – Aquisição e download dos dados brutos.  
 - [`02_tratamento_dados`](https://arpanosso.github.io//mestrado-durigan-remocoes-co2//02_tratamento_dados.html)
   – Faxina, filtragem e organização dos dados.  
-- [`03_preprocessamento`](scripts/03_preprocessamento.html) – Preparação
-  dos dados para análise.
+- [`03_preprocessamento`](https://arpanosso.github.io//mestrado-durigan-remocoes-co2//03_preprocessamento.html)
+  – Preparação dos dados para análise.
 
 ## 🔍 **Análise Exploratória dos Dados**
 
