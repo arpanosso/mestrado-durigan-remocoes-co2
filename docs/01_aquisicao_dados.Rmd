@@ -23,10 +23,28 @@ Este tutorial mostra como acessar manualmente os dados do Climate TRACE/CTrees p
 
 ![](../img/ct_tutorial_02.jpg)
 
-3. Navegue até **"View downloads by"** e escolha a opção **"Country"**. 
+### 3. Navegue até **"View downloads by"** e escolha a opção **"Country"**. 
 
 ![](../img/ct_tutorial_03.jpg)
 
+### 4. Encontre o país de interesse
+
+Role a lista até encontrar **Brazil** (ou outro país de interesse) e clique no link **CSV** correspondente.  
+Isso iniciará o download de um arquivo compactado no formato `.zip`.
+
+![](../img/ct_tutorial_04.jpg)
+
+O arquivo baixado conterá os dados de `emissões/remoções` por setor subsetor e tipo de gás para o país selecionado.
+
+### 5. Descompactar e organizar o arquivo
+
+Após o download:
+
+- Descompacte o arquivo `.zip`;
+- Mova a pasta com os arquivos descompactados para a pasta `data-raw/` do seu projeto em R.
+
+
+> 🧼 Com o arquivo no lugar certo, prossiga para a etapa de **tratamento e faxina dos dados** - [`02_tratamento_dados`](scripts/02_tratamento_dados.html) – Faxina, filtragem e organização dos dados.
 
 ## 💡 Acessando por API
 
