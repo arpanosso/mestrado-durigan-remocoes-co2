@@ -21,15 +21,15 @@ Repositório de apoio ao projeto de pesquisa de mestrado com foco na análise es
 ## 👨‍🔬 Autores
 
 - **Pedro Barbieri Durigan**  
-  Mestrando em Agronomia - Ciência do Solo  - FCAV/Unesp
+  Mestrando em Agronomia - Ciência do Solo  - FCAV/Unesp  
   Email: [pedro.durigan@unesp.br](mailto:pedro.durigan@unesp.b)
   
 - **Prof. Dr. Newton La Scala Júnior**  
-  Coorientador — Departamento de Ciências Exatas - FCAV/Unesp
+  Coorientador — Departamento de Ciências Exatas - FCAV/Unesp  
   Email: [la.scala@unesp.br](mailto:la.scala@unesp.br)
 
 - **Prof. Dr. Alan Rodrigo Panosso**  
-  Coorientador — Departamento de Ciências Exatas - FCAV/Unesp
+  Coorientador — Departamento de Ciências Exatas - FCAV/Unesp  
   Email: [alan.panosso@unesp.br](mailto:alan.panosso@unesp.br)
   
 ## 📁 Etapas do Projeto
@@ -37,7 +37,7 @@ Repositório de apoio ao projeto de pesquisa de mestrado com foco na análise es
 Os scripts abaixo foram desenvolvidos em RMarkdown e estão disponíveis em formato HTML:
 
 - [`01_aquisicao_dados`](https://arpanosso.github.io//mestrado-durigan-remocoes-co2//01_aquisicao_dados.html) – Aquisição e download dos dados brutos.  
-- [`02_tratamento_dados`](scripts/02_tratamento_dados.html) – Faxina, filtragem e organização dos dados.  
+- [`02_tratamento_dados`](https://arpanosso.github.io//mestrado-durigan-remocoes-co2//02_tratamento_dados.html) – Faxina, filtragem e organização dos dados.  
 - [`03_preprocessamento`](scripts/03_preprocessamento.html) – Preparação dos dados para análise.  
 
 

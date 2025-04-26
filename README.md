@@ -12,16 +12,16 @@ pela biomassa viva de ecossistemas florestais brasileiros, no período de
 ## 👨‍🔬 Autores
 
 - **Pedro Barbieri Durigan**  
-  Mestrando em Agronomia - Ciência do Solo - FCAV/Unesp Email:
-  [pedro.durigan@unesp.br](mailto:pedro.durigan@unesp.b)
+  Mestrando em Agronomia - Ciência do Solo - FCAV/Unesp  
+  Email: [pedro.durigan@unesp.br](mailto:pedro.durigan@unesp.b)
 
 - **Prof. Dr. Newton La Scala Júnior**  
-  Coorientador — Departamento de Ciências Exatas - FCAV/Unesp Email:
-  <la.scala@unesp.br>
+  Coorientador — Departamento de Ciências Exatas - FCAV/Unesp  
+  Email: <la.scala@unesp.br>
 
 - **Prof. Dr. Alan Rodrigo Panosso**  
-  Coorientador — Departamento de Ciências Exatas - FCAV/Unesp Email:
-  <alan.panosso@unesp.br>
+  Coorientador — Departamento de Ciências Exatas - FCAV/Unesp  
+  Email: <alan.panosso@unesp.br>
 
 ## 📁 Etapas do Projeto
 
@@ -30,8 +30,8 @@ em formato HTML:
 
 - [`01_aquisicao_dados`](https://arpanosso.github.io//mestrado-durigan-remocoes-co2//01_aquisicao_dados.html)
   – Aquisição e download dos dados brutos.  
-- [`02_tratamento_dados`](scripts/02_tratamento_dados.html) – Faxina,
-  filtragem e organização dos dados.  
+- [`02_tratamento_dados`](https://arpanosso.github.io//mestrado-durigan-remocoes-co2//02_tratamento_dados.html)
+  – Faxina, filtragem e organização dos dados.  
 - [`03_preprocessamento`](scripts/03_preprocessamento.html) – Preparação
   dos dados para análise.
 
