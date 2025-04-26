@@ -405,144 +405,223 @@ e <a href="https://arpanosso.github.io//mestrado-durigan-remocoes-co2//about_the
 </div>
 <div id="encontrando-os-arquivos-.csv" class="section level3">
 <h3>🔍📁 Encontrando os arquivos <code>.csv</code></h3>
-<pre class="r"><code>tbl_directorys &lt;- as_tibble(
-  list.files(&quot;data-raw/BRA/&quot;,
+<p>Para esta análise, vamos utilizar os arquivos no formato:</p>
+<p><code>&lt;nome-do-subsetor&gt;_country_emissions.csv</code></p>
+<p>Esses arquivos contêm as estimativas anuais/mensais de emissões e
+remoções de CO₂ organizadas por município, subsetor e etc.</p>
+<pre class="r"><code>emissions_sources_files &lt;- list.files(&quot;../data-raw/BRA/&quot;,
              full.names = TRUE,
-             recursive = TRUE)) %&gt;%
-  filter(str_detect(value, &quot;emissions_sources.csv&quot;))
+             recursive = TRUE,
+           pattern = &quot;emissions_sources.csv&quot;)</code></pre>
+</div>
+<div id="criando-função-para-ler1-arquivo" class="section level3">
+<h3>🛠️ Criando função para ler<span class="math inline">\(1\)</span>
+arquivo</h3>
+<p>A função <code>my_file_read</code> recebe o caminho de um arquivo
+<code>.csv</code> como entrada, lê o conteúdo do arquivo, remove as
+colunas que começam com “other” (colunas auxiliares menos relevantes
+para a análise), e adiciona uma nova coluna chamada
+<code>directory</code> contendo o caminho original do arquivo, útil para
+rastrear a origem dos dados em etapas subsequentes.</p>
+<pre class="r"><code># criando a função
+my_file_read &lt;- function(file_path) {
+  read.csv(file_path, 
+           stringsAsFactors = FALSE)  |&gt; 
+    dplyr::select(!dplyr::starts_with(&quot;other&quot;)) |&gt; 
+    dplyr::mutate(
+      directory = file_path,
+      native_source_id = as.character(native_source_id))
+}</code></pre>
+</div>
+<div id="aplicando-a-função-de-leitura-aos-arquivos" class="section level3">
+<h3>🧩 Aplicando a função de leitura aos arquivos</h3>
+<p><code>emissions_sources_files</code>: contém os caminhos completos
+dos arquivos .csv que queremos importar (obtidos com list.files()).</p>
+<p><code>my_file_read</code>: é a função definida anteriormente que
+realiza a leitura e pequenas transformações no arquivo.</p>
+<p><code>map_dfr()</code>: aplica a função a cada arquivo da lista e
+junta tudo em um único data.frame. <code>map</code> vem do conceito de
+programação funcional chamado “mapear uma função sobre uma estrutura de
+dados”. Isso significa: <strong>Aplicar uma função a cada elemento de um
+vetor ou lista, retornando uma nova estrutura com os
+resultados</strong>.</p>
+<p><code>glimpse()</code>: mostra um resumo estruturado dos dados
+finais.</p>
+<pre class="r"><code># Empilhando todos os arquivos no objeto dados, pela Aplicanção 
+# da função a todos os arquivos encontrados
+dados_emissoes &lt;- purrr::map_dfr(
+  emissions_sources_files, 
+  my_file_read)</code></pre>
+</div>
+<div id="tratamento-preprocessingtransformation" class="section level3">
+<h3>🛠️ Tratamento (preprocessing/transformation):</h3>
+<p>Agora precisamos converter tipos de dados (como de character para
+Date), criar novas variáveis (como o year a partir de end_time) e
+reorganizar ou transformar variáveis para análise.</p>
+<pre class="r"><code># Tratanto as colunas de data
+dados_emissoes &lt;- dados_emissoes |&gt; 
+  dplyr::mutate(
+    start_time = lubridate::as_date(start_time),
+    end_time = lubridate::as_date(end_time),
+    created_date = lubridate::as_date(created_date),
+    modified_date = lubridate::as_date(modified_date),
+    year = lubridate::year(end_time),
+    month = lubridate::month(end_time),
+    directory = stringr::str_remove(directory,&quot;../data-raw/BRA/DATA/|_emissions_sources.csv&quot;),
+   )</code></pre>
+</div>
+<div id="carregando-dados-geográficos-do-brasil" class="section level3">
+<h3>🌎 Carregando dados geográficos do Brasil</h3>
+<p>Nesta etapa, utilizamos o pacote <code>{geobr}</code> para importar
+informações geográficas oficiais do Brasil. Esses dados são importantes
+para análises espaciais e visualizações no contexto ambiental e
+territorial. Os seguintes objetos são criados:</p>
+<ul>
+<li><p><code>municipality</code>: Contém os limites geográficos de todos
+os municípios brasileiros.</p></li>
+<li><p><code>states</code>: Contém os limites geográficos de todos os
+estados brasileiros.</p></li>
+<li><p><code>biomes</code>: Traz os contornos dos biomas do Brasil (como
+Amazônia, Cerrado, Mata Atlântica, etc.).</p></li>
+<li><p><code>conservation</code>: Inclui os limites das Unidades de
+Conservação brasileiras, como parques nacionais e reservas
+ecológicas.</p></li>
+<li><p><code>indigenous</code>: Contém as terras indígenas oficialmente
+reconhecidas.</p></li>
+</ul>
+<p>Essas camadas podem ser sobrepostas a dados de emissões para entender
+a distribuição espacial em relação a áreas protegidas, territórios
+indígenas ou regiões ecológicas específicas.</p>
+<p>Para maiores informações acesse <a href="https://cran.r-project.org/web/packages/geobr/vignettes/intro_to_geobr.html">Introduction
+to geobr (R)</a></p>
+<pre class="r"><code>municipality &lt;- geobr::read_municipality(showProgress = FALSE)|&gt; 
+  dplyr::rename(target = name_muni )
+states &lt;- geobr::read_state(showProgress = FALSE) |&gt; 
+  dplyr::rename(target = abbrev_state )
+biomes &lt;- geobr::read_biomes(showProgress = FALSE) |&gt; 
+  dplyr::rename(target = name_biome)
+conservation &lt;- geobr::read_conservation_units(showProgress = FALSE) |&gt; 
+  dplyr::rename(target = name_conservation_unit)
+indigenous &lt;- geobr::read_indigenous_land(showProgress = FALSE) |&gt; 
+  dplyr::rename(target = terrai_nom)</code></pre>
+</div>
+<div id="função-para-verificar-se-pontos-estão-dentro-de-um-polígono" class="section level3">
+<h3>🧭 Função para verificar se pontos estão dentro de um polígono</h3>
+<p>A função <code>def_pol()</code> tem como objetivo <strong>verificar
+se pontos (definidos por coordenadas <code>x</code> e <code>y</code>)
+estão dentro de um polígono geográfico</strong>.</p>
+<p>Ela utiliza a função <code>point.in.polygon()</code> do pacote
+<code>{sp}</code> para realizar essa verificação espacial. Isso é útil
+para saber, por exemplo, <strong>quais fontes de emissão estão dentro de
+um determinado bioma ou unidade de conservação</strong>.</p>
+<pre class="r"><code>def_pol &lt;- function(x, y, pol){
+  as.logical(sp::point.in.polygon(
+    point.x = x,         # Coordenadas X dos pontos
+    point.y = y,         # Coordenadas Y dos pontos
+    pol.x = pol[,1],     # Coordenadas X do polígono (coluna 1 do objeto pol)
+    pol.y = pol[,2]      # Coordenadas Y do polígono (coluna 2 do objeto pol)
+  ))
+}</code></pre>
+</div>
+<div id="função-get_geobr_pol" class="section level3">
+<h3>🧩 Função <code>get_geobr_pol()</code></h3>
+<p>A função tem como entrada: um índice <code>i</code> e um objeto do
+<code>{geobr}</code> (geobr_obj) — que contém geometrias (como states,
+biomes, etc.). O processo acessa o slot <code>$geom</code>, que é uma
+lista de geometrias (um sfc do <code>{sf}</code>), usa
+<code>purrr::pluck(i)</code> para pegar a geometria do estado
+<code>i</code> (ex: 1º estado) e converte essa geometria (um POLYGON ou
+MULTIPOLYGON) em uma matriz com <code>as.matrix()</code> — essencial
+para usar em funções como <code>point.in.polygon()</code> depois. A
+saída da função é uma matriz com as coordenadas do polígono do estado
+selecionado.</p>
+<pre class="r"><code>get_geobr_pol &lt;- function(i, geobr_obj) {
+  pol&lt;-geobr_obj$geom |&gt; 
+    purrr::pluck(i) |&gt; 
+    as.matrix()
+  return(pol) 
+}</code></pre>
+</div>
+<div id="função-get_geobr" class="section level3">
+<h3>📦 Função <code>get_geobr()</code></h3>
+<p>serve para determinar a qual unidade dentro do <code>geobr_obj</code>
+pertence um ponto geográfico, com base nas coordenadas <code>x</code>
+(longitude) e <code>y</code> (latitude), a partir da geometria
+específica.</p>
+<pre class="r"><code>get_geobr &lt;- function(x, y, geobr_obj){
+  target &lt;- geobr_obj$target
+  list_pol &lt;- purrr::map(
+    1:nrow(geobr_obj), 
+    get_geobr_pol,
+    geobr_obj = geobr_obj)
+  names(list_pol) &lt;- target
+  
+  x &lt;- as.vector(x[1])
+  y &lt;- as.vector(y[1])
+  resul &lt;- &quot;Other&quot;
 
-# Extraindo os caminhos dos arquvios
-value &lt;- tbl_directorys %&gt;% pull(value)
+  for(i in 1:nrow(geobr_obj)){
+    if(def_pol(x, y, list_pol[[i]])){
+      resul &lt;- names(list_pol[i])
+      break
+    } else {
+      resul &lt;- resul
+    }
+  }
+  return(as.vector(resul))
+}
 
-# Mapeando Transportation -------------------------------------------------
-trans_values &lt;- tbl_directorys %&gt;%
-  filter(str_detect(value,&quot;transportation&quot;)) %&gt;%
-  pull(value)
-
-# Contando as linhas dos arquivos
-# row_count &lt;- function(sector_name){
-#   read.csv(sector_name) %&gt;%
-#     nrow()
-# }
-# row_count(value[1])
-# map_dbl(value, row_count) %&gt;% sum
-
-# Atualizando o banco todo ------------------------------------------------
-# Empilhando todos os arquivos no objeto dados
-# my_file_read(value[1])
-dados &lt;- map_dfr(value, my_file_read)
-glimpse(dados)
-
-# Numéro de posições no caminho divididas por &quot;/&quot;
-n_position &lt;- ncol(str_split(tbl_directorys[1,1],&quot;/&quot;,simplify = TRUE))
-
-
-# Tratanto as colunas de data, nome de setores e sub setores
-dados &lt;- dados %&gt;%
-  mutate(
-    start_time = as_date(start_time),
-    end_time = as_date(end_time),
-    created_date = as_date(created_date),
-    modified_date = as_date(modified_date),
-    year = lubridate::year(end_time)
-  ) %&gt;%
-  mutate(
-    sector_name = str_split(directory,
-                            &quot;/&quot;,
-                            simplify = TRUE)[,n_position -1],
-    sub_sector = str_split(directory,
-                           &quot;/&quot;,
-                           simplify = TRUE)[,n_position],
-    sub_sector = str_remove(sub_sector,&quot;_emissions_sources.csv|_country_emissions.csv&quot;)
+# Testando da Função
+get_geobr(-47.9292, -15.7801, states) # → &quot;DF&quot; (Brasília)</code></pre>
+<pre><code>## [1] &quot;DF&quot;</code></pre>
+<pre class="r"><code>get_geobr(-47.9292, -15.7801, biomes) # → &quot;Cerrado&quot;</code></pre>
+<pre><code>## [1] &quot;Cerrado&quot;</code></pre>
+<pre class="r"><code>get_geobr(-47.9292, -15.7801, conservation) # → &quot;Other&quot;</code></pre>
+<pre><code>## [1] &quot;Other&quot;</code></pre>
+<pre class="r"><code>get_geobr(-47.9292, -15.7801, indigenous) # → &quot;Other&quot;</code></pre>
+<pre><code>## [1] &quot;Other&quot;</code></pre>
+<p>Vamos criar um arquivo com todos os pares de coordenadas que ocorrem
+na base de dados e classificar.</p>
+<p><code>dados_emissoes |&gt; group_by(lon, lat)</code>: Agrupa os dados
+por coordenadas geográficas (longitude e latitude).</p>
+<p><code>summarise(year_m = mean(year))</code>: Faz um resumo calculando
+a média do ano (year), mas esse valor será descartado logo em
+seguida.</p>
+<p><code>select(-year_m)</code>: Remove a coluna year_m, sobrando só lon
+e lat no resultado.</p>
+<p><code>mutate(...)</code>: Para cada par de (lon, lat), ele chama a
+função get_geobr para classificar:</p>
+<ul>
+<li><p>state → qual estado o ponto pertence;</p></li>
+<li><p>biome → qual bioma o ponto pertence;</p></li>
+<li><p>conservation → se está em área de unidade de
+conservação;</p></li>
+<li><p>indigenous → se está em terra indígena.</p></li>
+</ul>
+<p><code>write_rds(...)</code>: Salva o resultado
+(<code>base_sigla_uf</code>) em um arquivo <code>.rds</code> para usar
+depois sem precisar recalcular tudo.</p>
+<pre class="r"><code>base_sigla_uf &lt;- dados_emissoes |&gt; 
+  dplyr::distinct(lon, lat) |&gt; 
+  dplyr::mutate(
+    state = get_geobr(lon, lat, states),
+    biome = get_geobr(lon, lat, biomes),
+    conservation = get_geobr(lon, lat, conservation),
+    indigenous = get_geobr(lon, lat, indigenous)
   )
-dados$sector_name %&gt;% unique()
-dados$sub_sector %&gt;% unique()
-dados$year %&gt;% table()
-
-
-# agrupando a base por nome e coordenada
-# Classificando o ponto em um estado
-base_sigla_uf &lt;- dados %&gt;%
-  group_by(source_name, lon, lat) %&gt;%
-  summarise(
-    ano = mean(year)
-  ) %&gt;%
-  mutate(
-    sigla_uf = get_geobr_state(lon,lat),
-    biome = get_geobr_biomes(lon,lat),
-    flag_conservation = get_geobr_conservation(lon,lat),
-    flag_indigenous = get_geobr_indigenous(lon,lat)
-  )
-
-### testando flag_indigenous
-# base_sigla_uf %&gt;%
-#   filter(flag_indigenous) %&gt;%
-#   ggplot(aes(x=lon,y=lat))+
-#   geom_point()
-
-# indigenous   %&gt;%
-#   ggplot() +
-#   geom_sf(fill=&quot;white&quot;, color=&quot;black&quot;,
-#           size=.15, show.legend = FALSE) +
-#   geom_point(
-#     data = base_sigla_uf %&gt;%
-#       filter(flag_indigenous),
-#     aes(lon,lat))
-
-
-### testando flag_conservation
-# base_sigla_uf %&gt;%
-#   filter(flag_conservation) %&gt;%
-#   ggplot(aes(x=lon,y=lat))+
-#   geom_point()
-
-# conservation   %&gt;%
-#   ggplot() +
-#   geom_sf(fill=&quot;white&quot;, color=&quot;black&quot;,
-#           size=.15, show.legend = FALSE) +
-#   geom_point(
-#     data = base_sigla_uf %&gt;%
-#       filter(flag_conservation),
-#     aes(lon,lat))
-
-### testando classificação por bioma
-# base_sigla_uf %&gt;%
-#   ggplot(aes(x=lon,y=lat,col=biome))+
-#   geom_point()
-# base_sigla_uf$biome %&gt;% unique() == &quot;Amazônia&quot;
-#
-# base_sigla_uf %&gt;%
-#   mutate(
-#     biome_n = biome == &quot;Amazônia&quot;
-#   ) %&gt;% glimpse()
-
-### Arrumando classificação
-# base_sigla_uf %&gt;%
-#   mutate(
-#     biome_n = case_when(
-#         biome==&#39;Other&#39;&amp; lon&gt;= -45 &amp; lat &lt; -6~&#39;AF&#39;,
-#         biome == &quot;Amazônia&quot; ~ &quot;AMZ&quot;,
-#         biome==&#39;Other&#39;&amp; lon&lt; -45 &amp; lat &gt;=-10 ~&#39;AMZ&#39;,
-#         biome == &#39;Mata Atlântica&#39; &amp; lon&gt; -40 &amp; lat &lt; -20 ~&#39;Other&#39;,
-#         biome == &#39;Mata Atlântica&#39; &amp; lon&gt; -34 &amp; lat &gt; -5 ~&#39;Other&#39;,
-#         biome == &#39;Mata Atlântica&#39; ~ &#39;AF&#39;,
-#         biome==&#39;Cerrado&#39;~&#39;CERR&#39;,
-#         biome ==&#39;Pampa&#39;~&#39;PMP&#39;,
-#         biome == &#39;Pantanal&#39; ~ &#39;PNT&#39;,
-#         biome==&#39;Caatinga&#39;~&#39;CAAT&#39;,
-#         TRUE ~ &#39;Other&#39;
-#       )
-#   ) %&gt;%
-#   ggplot(aes(x=lon,y=lat,color=biome_n))+
-#   geom_point()
-
-base_sigla_uf &lt;- base_sigla_uf %&gt;%
-  mutate(
+readr::write_rds(base_sigla_uf,&quot;../data/states_biom_conser_ind-br.rds&quot;)</code></pre>
+<p>Criando uma nova coluna chamada <code>biomes</code> que é uma versão
+“ajustada” do <code>biome</code> Faz várias reclassificações baseadas
+em: Nome original do bioma (biome) e condições de latitude (lat) e
+longitude (lon).</p>
+<pre class="r"><code>base_sigla_uf &lt;- readr::read_rds(&quot;../data/states_biom_conser_ind-br.rds&quot;)
+base_sigla_uf &lt;- base_sigla_uf |&gt;
+  dplyr::mutate(
     biomes =
-      case_when(
-        biome==&#39;Other&#39;&amp; lon&gt;=-45 &amp; lat &lt;0~&#39;AF&#39;,
+      dplyr::case_when(
+        biome==&#39;Other&#39;&amp; lon &gt;=-45 &amp; lat &lt;0~&#39;AF&#39;,
         biome==&#39;Amazônia&#39;~&#39;AMZ&#39;,
-        biome==&#39;Other&#39;&amp; lon&lt; -45 &amp; lat &gt;=-10 ~&#39;AMZ&#39;,
+        biome==&#39;Other&#39;&amp; lon &lt; -45 &amp; lat &gt;=-10 ~&#39;AMZ&#39;,
         biome == &#39;Mata Atlântica&#39; &amp; lon&gt; -40 &amp; lat &lt; -20 ~&#39;Other&#39;,
         biome == &#39;Mata Atlântica&#39; &amp; lon&gt; -34 &amp; lat &gt; -5 ~&#39;Other&#39;,
         biome == &#39;Mata Atlântica&#39; ~ &#39;AF&#39;,
@@ -552,162 +631,76 @@ base_sigla_uf &lt;- base_sigla_uf %&gt;%
         biome==&#39;Caatinga&#39;~&#39;CAAT&#39;,
         .default = &#39;Other&#39;
       )
-    )
-
-# base_sigla_uf %&gt;%
-#   ggplot(aes(x=lon,y=lat,col=biomes))+
-#   geom_point()
-
-###
-# Classificando pelo pol da cidade ----------------------------------------
-base_sigla_uf$sigla_uf %&gt;% unique()
-citys &lt;- geobr::read_municipality()
-resul &lt;- vector()
-estado &lt;- base_sigla_uf$sigla_uf
-tictoc::tic()
-for(i in 1:nrow(base_sigla_uf)){
-  if(estado[i]!=&quot;Other&quot;){
-    my_citys_obj &lt;- citys %&gt;%
-      filter(abbrev_state == estado[i])
-    n_citys &lt;- nrow(my_citys_obj)
-    my_citys_names &lt;- my_citys_obj %&gt;% pull(name_muni)
-    resul[i] &lt;- &quot;Other&quot;
-    for(j in 1:n_citys){
-      pol_city &lt;- my_citys_obj$geom  %&gt;%
-        purrr::pluck(j) %&gt;%
-        as.matrix()
-      if(def_pol(base_sigla_uf$lon[i],
-                 base_sigla_uf$lat[i],
-                 pol_city)){
-        resul[i] &lt;- my_citys_names[j]
-      }
-    }
-  }
-}
-tictoc::toc()
-base_sigla_uf$city_ref &lt;- resul
-
-get_geobr_city_n &lt;- function(x, y, estado){
-  my_citys_obj &lt;- citys %&gt;%
-    tibble() %&gt;%
-    filter(abbrev_state == estado)
-  n_citys &lt;-  my_citys_obj %&gt;% nrow()
-  return(n_citys)
-};get_geobr_city_n(-47.2, -23.1,&quot;SP&quot;)
-
-get_geobr_city &lt;- function(arg){
+    )</code></pre>
+</div>
+<div id="função-get_geobr_municipaly" class="section level3">
+<h3>📦 Função <code>get_geobr_municipaly()</code></h3>
+<p>serve para determinar a qual município a partir do estado pertence um
+ponto geográfico, com base nas coordenadas <code>x</code> (longitude) e
+<code>y</code> (latitude), o estado a partir da geometria do municipio
+<code>municipaly</code>.</p>
+<pre class="r"><code>get_geobr_municipaly &lt;- function(x, y, state, geobr_obj){
+  state &lt;- as.vector(state[1])
+  x &lt;- as.vector(x[1])
+  y &lt;- as.vector(y[1])
   resul &lt;- &quot;Other&quot;
-    if(!is.na(arg)){
-    arg &lt;- as.vector(as.character(arg))
-    marg &lt;- str_split(arg,&quot; &quot;,simplify = TRUE)
-    n_citys &lt;- marg[1,1] %&gt;% as.numeric()
-    x &lt;- marg[1,2] %&gt;% as.numeric()
-    y &lt;- marg[1,3] %&gt;% as.numeric()
-    estado &lt;- marg[1,4]
-    my_citys_obj &lt;- citys %&gt;%
-      tibble() %&gt;%
-      filter(abbrev_state == estado)
-    if(estado != &quot;Other&quot;){
-      my_citys_names &lt;- my_citys_obj %&gt;% pull(name_muni)
-      for(i in 1:n_citys){
-        pol_city &lt;- my_citys_obj$geom  %&gt;%
-          purrr::pluck(i) %&gt;%
-          as.matrix()
-        if(def_pol(x, y, pol_city)){
-          resul &lt;- my_citys_names[i]
-        }
-      }
+  if(state == &quot;Other&quot;) {return(resul)}
+  geobr_obj &lt;- geobr_obj |&gt; 
+    dplyr::filter(abbrev_state == state)
+  target &lt;- geobr_obj$target
+  list_pol &lt;- purrr::map(
+    1:nrow(geobr_obj), 
+    get_geobr_pol,
+    geobr_obj = geobr_obj)
+  names(list_pol) &lt;- target
+  
+  for(i in 1:nrow(geobr_obj)){
+    if(def_pol(x, y, list_pol[[i]])){
+      resul &lt;- names(list_pol[i])
+      break
+    } else {
+      resul &lt;- resul
     }
   }
-  return(resul)
-};get_geobr_city(NA)
+  return(as.vector(resul))
+}
 
-# tictoc::tic()
-# base_sigla_uf &lt;- base_sigla_uf %&gt;%
-#   group_by(sigla_uf) %&gt;%
-#   nest() %&gt;%
-#   #filter(sigla_uf != &quot;DF&quot;) %&gt;%
-#   mutate(
-#     nr = map(sigla_uf,
-#              ~get_geobr_city_n(data$lon,
-#                                data$lat,
-#                                .x))
-#   ) %&gt;%
-#   unnest(cols = c(data, nr)) %&gt;%
-#   ungroup() %&gt;%
-#   # sample_n(10) %&gt;%
-#   mutate(
-#     list_par = str_c(nr, lon, lat, sigla_uf,sep=&quot; &quot;),
-#   ) %&gt;%
-#   mutate(
-#     city_ref = map(list_par,get_geobr_city)
-#   ) %&gt;%
-#   unnest(cols = c(city_ref_2))
-# tictoc::toc()
-
-# Final da faxina ---------------------------------------------------------
-# lendo arquivo da base nacional
-brazil_ids &lt;- read_rds(&quot;data/df_nome.rds&quot;)
-
-# mesclando as bases
-base_sigla_uf &lt;- left_join(base_sigla_uf,brazil_ids %&gt;%
-            group_by(sigla_uf,nome_regiao) %&gt;%
-            summarise(count=n()) %&gt;%
-            select(sigla_uf,nome_regiao),
-          by = c(&quot;sigla_uf&quot;))
-
-# Mesclando e salvando o arquivo final
-dados_sigla &lt;- left_join(
-  dados,
-  base_sigla_uf %&gt;%
-    ungroup() %&gt;%
-    select(source_name, lon, lat, sigla_uf, nome_regiao, biomes,
-           flag_indigenous, flag_conservation, city_ref),
-  by = c(&quot;source_name&quot;,&quot;lat&quot;,&quot;lon&quot;)
-) %&gt;% as_tibble()
-
-dados_sigla$nome_regiao %&gt;%  unique()
-
-write_rds(dados_sigla %&gt;%
-             rename(biome = biomes), &quot;data/emissions_sources.rds&quot;)
-
-# country data -----------------------------------------------------------------
-# buscando o caminho dos setores
-tbl_directorys &lt;- as_tibble(
-  list.files(&quot;data-raw/BRA/&quot;, full.names = TRUE, recursive = TRUE)) %&gt;%
-  filter(str_detect(value, &quot;country_emissions.csv&quot;))
-
-# Extraindo os caminhos dos arquvios
-value &lt;- tbl_directorys %&gt;% pull(value)
-
-# Empilhando todos os arquivos no objeto dados
-my_file_read(value[1])
-dados_country &lt;- map_dfr(value, my_file_read) %&gt;%
-  as_tibble()
-glimpse(dados_country)
-
-dados_country &lt;- dados_country %&gt;%
-  # filter(gas == &quot;co2e_100yr&quot;) %&gt;%
-  mutate(
-    start_time = as_date(start_time),
-    end_time = as_date(end_time),
-    created_date = as_date(created_date),
-    modified_date = as_date(modified_date),
-    year = lubridate::year(end_time)
-  ) %&gt;%
-  mutate(
-    sector_name = str_split(directory,
-                            &quot;/&quot;,
-                            simplify = TRUE)[,3],
-    sector_name = str_remove(sector_name,&quot;_country_emissions.csv&quot;)
-  )
-
-dados_country$directory[1]
-
-dados_country %&gt;%
-  select( sector_name ) %&gt;%
-  distinct()
-write_rds(dados_country, &quot;data/country_emissions.rds&quot;)</code></pre>
+# Testando da Função
+get_geobr_municipaly(-47.9292, -15.7801, &quot;DF&quot;,municipality) # → (Brasília)</code></pre>
+<pre><code>## [1] &quot;Brasília&quot;</code></pre>
+<pre class="r"><code>get_geobr_municipaly(-47.2, -23.1,&quot;SP&quot;, municipality) # → (Indaiatuba)</code></pre>
+<pre><code>## [1] &quot;Indaiatuba&quot;</code></pre>
+<pre class="r"><code>get_geobr_municipaly(-57.97413, -22.18186,&quot;SP&quot;, municipality) # → (Other)</code></pre>
+<pre><code>## [1] &quot;Other&quot;</code></pre>
+<p>Vamos criar uma nova base com os pontos classificados por
+município</p>
+<pre class="r"><code>base_sigla_uf_muni &lt;- base_sigla_uf |&gt; 
+  dplyr::mutate(
+    muni = get_geobr_municipaly(lon, lat, state, municipality)
+  )</code></pre>
+</div>
+<div id="mesclando-e-salvando-a-base" class="section level3">
+<h3>📁 Mesclando e Salvando a base</h3>
+<p>Buscar as regiões do Brasil a partir de dados oficiais do IBGE,
+previamente salvos em <code>df_nome.rds</code>. Posteriormente, vamos
+mesclar as bases e salvar na pasta <code>data</code> com o nome
+<code>emissions_sources.rds</code>.</p>
+<pre class="r"><code>brazil_ids &lt;- readr::read_rds(&quot;../data/df_nome.rds&quot;)
+base_sigla_region &lt;- dplyr::left_join(base_sigla_uf_muni,brazil_ids  |&gt; 
+                                        dplyr::group_by(sigla_uf,nome_regiao) |&gt; 
+                                        dplyr::summarise(count=dplyr::n()) |&gt; 
+                                        dplyr::select(sigla_uf,nome_regiao) |&gt;
+                                        dplyr::rename(state = sigla_uf,region = nome_regiao),
+                                      by = c(&quot;state&quot;))
+dplyr::left_join(
+  dados_emissoes,
+  base_sigla_region |&gt; 
+    dplyr::ungroup(),
+  by = c(&quot;lat&quot;,&quot;lon&quot;)
+) |&gt; 
+  dplyr::rename(biome_sig = biomes) |&gt;
+  tibble::as_tibble() |&gt; 
+  readr::write_rds( &quot;../data/emissions_sources.rds&quot;)</code></pre>
 </div>
 
 
