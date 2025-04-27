@@ -103,13 +103,12 @@ q1 <- quantile(x,.25)
 q3 <- quantile(x,.75)
 iiq <- q3-q1
 emissions_sources_forestry |>
-  dplyr::select(emissions_quantity,year) |>
   dplyr::filter(emissions_quantity > q1-1.5*iiq, emissions_quantity<q3+1.5*iiq) |>
   tidyr::drop_na() |>
-  ggplot2::ggplot(ggplot2::aes(x =emissions_quantity)) +
-  ggplot2::geom_histogram(boundary=0, color="black", fill="gray",
+  ggplot2::ggplot(ggplot2::aes(x =emissions_quantity, y=..density.., fill=biome_sig)) +
+  ggplot2::geom_histogram(boundary=0, color="black",
                           bins = 100) +
-  ggplot2::facet_wrap(~year,scales = "free")+
+  ggplot2::facet_wrap(~biome_sig)+
   ggplot2::theme_bw()
 ```
 ### activity
@@ -121,13 +120,13 @@ q1 <- quantile(x,.25)
 q3 <- quantile(x,.75)
 iiq <- q3-q1
 emissions_sources_forestry |>
-  dplyr::select(activity,year) |>
+  # dplyr::select(activity,year) |>
   dplyr::filter(activity > q1-0.5*iiq, activity<q3*.01) |>
   tidyr::drop_na() |>
-  ggplot2::ggplot(ggplot2::aes(x =activity)) +
-  ggplot2::geom_histogram(boundary=0, color="black", fill="gray",
+  ggplot2::ggplot(ggplot2::aes(x =activity, y=..density.., fill=biome_sig)) +
+  ggplot2::geom_histogram(boundary=0, color="black",
                           bins = 50) +
-  ggplot2::facet_wrap(~year,scales = "free")+
+  ggplot2::facet_wrap(~biome_sig)+
   ggplot2::theme_bw()
 ```
 
@@ -140,13 +139,13 @@ q1 <- quantile(x,.25)
 q3 <- quantile(x,.75)
 iiq <- q3-q1
 emissions_sources_forestry |>
-  dplyr::select(emissions_factor,year) |>
+  # dplyr::select(emissions_factor,year) |>
   dplyr::filter(emissions_factor > q1-0.5*iiq, emissions_factor<q3+0.5*iiq) |>
   tidyr::drop_na() |>
-  ggplot2::ggplot(ggplot2::aes(x =emissions_factor)) +
-  ggplot2::geom_histogram(boundary=0, color="black", fill="gray",
+  ggplot2::ggplot(ggplot2::aes(x =emissions_factor, y = ..density.. ,fill=biome_sig)) +
+  ggplot2::geom_histogram(boundary=0, color="black",
                           bins = 50) +
-  ggplot2::facet_wrap(~year,scales = "free")+
+  ggplot2::facet_wrap(~biome_sig)+
   ggplot2::theme_bw()
 ```
 ### capacity
@@ -158,13 +157,12 @@ q1 <- quantile(x,.25)
 q3 <- quantile(x,.75)
 iiq <- q3-q1
 emissions_sources_forestry |>
-  dplyr::select(capacity,year) |>
   dplyr::filter(capacity > q1-3.5*iiq, capacity<q3+3.5*iiq) |>
   tidyr::drop_na() |>
-  ggplot2::ggplot(ggplot2::aes(x =capacity)) +
-  ggplot2::geom_histogram(boundary=0, color="black", fill="gray",
-                          bins = 150) +
-  ggplot2::facet_wrap(~year,scales = "free")+
+  ggplot2::ggplot(ggplot2::aes(x =capacity, y=..density.., fill=biome_sig)) +
+  ggplot2::geom_histogram(boundary=0, color="black",
+                          bins = 100) +
+  ggplot2::facet_wrap(~biome_sig)+
   ggplot2::theme_bw()
 ```
 
@@ -177,12 +175,11 @@ q1 <- quantile(x,.25)
 q3 <- quantile(x,.75)
 iiq <- q3-q1
 emissions_sources_forestry |>
-  dplyr::select(capacity_factor,year) |>
   dplyr::filter(capacity_factor > q1-0.5*iiq, capacity_factor<q3*.001) |>
   tidyr::drop_na() |>
-  ggplot2::ggplot(ggplot2::aes(x =capacity_factor)) +
-  ggplot2::geom_histogram(boundary=0, color="black", fill="gray",
+  ggplot2::ggplot(ggplot2::aes(x =capacity_factor, y=..density..,fill=biome_sig)) +
+  ggplot2::geom_histogram(boundary=0, color="black",
                           bins = 50) +
-  ggplot2::facet_wrap(~year,scales = "free")+
+  ggplot2::facet_wrap(~biome_sig)+
   ggplot2::theme_bw()
 ```
