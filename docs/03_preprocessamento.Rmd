@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = TRUE,
                       error = FALSE, 
                       warning = FALSE)
 ```
+
 ## 🛠️ Pré-processamento
 
 Nesta etapa, vamos realizar um pré-processamento mais refinado dos dados, que inclui: visualização espacial dos pontos para identificar padrões geográficos e possíveis inconsistências de localização; Filtragem de Linhas e Variáveis e Seleção de observações e atributos relevantes para as próximas etapas da análise; Detecção de Inconsistências: Identificação de valores extremos ou incoerentes que podem comprometer a qualidade das análises futuras.
@@ -20,7 +21,48 @@ Nesta etapa, vamos realizar um pré-processamento mais refinado dos dados, que i
 emissions_sources <- readr::read_rds("../data/emissions_sources.rds")
 ```
 
-### ⏳ Filtrando  os dados  para  forestry-and-land-use e selecionando variáveis para a análise.
+### 🔎 Validação dos dados (ano = 2021)
+
+Após o tratamento, os dados serão analisados e comparados com as informações originais do site Climate TRACE, a fim de verificar a consistência e a qualidade do processamento.
+
+Ao buscar o município de "Jaboticabal" na plataforma Climate TRACE, são apresentadas várias categorias de dados, referentes às emissões de gases de efeito estufa em diferentes níveis geográficos e fontes.
+
+![](../img/ct_tutorial_05.jpg)
+
+As principais categorias encontradas são:
+
+-   **City** - Jaboticabal Urban Area, BR: Refere-se à área urbana de Jaboticabal e apresenta dados de emissões provenientes das atividades dentro dessa zona, como transporte, indústria e outros fatores urbanos.
+
+![](../img/ct_tutorial_06.jpg)
+```{r}
+emissions_sources |> 
+  dplyr::filter(
+    source_name == "Jaboticabal" | muni == "Jaboticabal",
+    year == 2021,
+    !subsector %in% c("forest-land-clearing",
+                     "forest-land-degradation",
+                     "forest-land-fires",
+                     "removals",
+                     "shrubgrass-fires",
+                     "wetland-fires"),
+    # sector != "forestry-and-land-use"
+    ) |>  
+ dplyr::group_by(lat,sector) |>
+  dplyr::summarise(
+    emissions_quantity_sum = sum(emissions_quantity, na.rm = TRUE)
+  ) |>
+  dplyr::group_by(lat) |>
+  dplyr::mutate(
+   emissions_quantity_cumsum = cumsum(emissions_quantity_sum)
+  )
+```
+
+-   **Country** - Jaboticabal Municipality, São Paulo State, BRA: Relacionado ao município de Jaboticabal como um todo, esta categoria inclui dados sobre as emissões em áreas rurais e urbanas, englobando fontes como agricultura e uso do solo.
+
+-   **Asset**: Refere-se a fontes específicas de emissões dentro da cidade ou município, como fábricas, usinas de energia ou instalações industriais. Cada "asset" tem dados específicos sobre suas emissões, permitindo uma análise mais detalhada.
+
+
+### ⏳ Filtrando os dados para `forestry-and-land-use` e selecionando variáveis para a análise.
 
 ```{r}
 emissions_sources_forestry <- emissions_sources |> 
@@ -35,8 +77,24 @@ emissions_sources_forestry <- emissions_sources |>
     -c(source_id,iso3_country,created_date,modified_date,lat_lon,directory,native_source_id,
        start_time,end_time,source_type,reporting_entity,sector_id,reporting_entity,geometry_ref)) |> 
   dplyr::relocate(year,month,lon,lat,source_name,muni,state,region)
-visdat::vis_miss(emissions_sources_forestry[
-  sample(1:nrow(emissions_sources_forestry),3e4,),])
+```
+
+### 📈📊
+
+Usa a função `vis_miss()` do pacote `{visdat}` para visualizar graficamente os dados faltantes (NAs).
+
+Ele gera um gráfico de calor onde:
+
+```         
+As células preenchidas mostram dados presentes.
+
+As células em branco ou coloridas indicam dados ausentes.
+```
+
+```{r}
+emissions_sources_forestry |> 
+  dplyr::sample_n(3e4) |> 
+  visdat::vis_miss()
 ```
 
 ### 🗺️ Plotando espacialmente os ponto
@@ -68,6 +126,7 @@ indigenous    |>
      ggplot2::aes(lon,lat)) +
   ggplot2::theme_bw()
 ```
+
 Áreas de conservação
 
 ```{r}
@@ -88,11 +147,20 @@ conservation    |>
 
 Nesta seção, serão construídos histogramas e boxplots para avaliar a distribuição das variáveis numéricas disponíveis no conjunto de dados.
 
- + Histogramas ajudam a identificar o comportamento geral dos dados, como simetria, caudas longas ou concentrações anormais de valores.
+-   Histogramas ajudam a identificar o comportamento geral dos dados, como simetria, caudas longas ou concentrações anormais de valores.
 
- + Boxplots facilitam a visualização de outliers, assimetria e amplitude interquartil (IQR), sendo ferramentas rápidas para checagem da qualidade e integridade dos dados.
+-   Boxplots facilitam a visualização de outliers, assimetria e amplitude interquartil (IQR), sendo ferramentas rápidas para checagem da qualidade e integridade dos dados.
 
 A combinação dos dois gráficos para cada variável permite uma análise exploratória robusta e auxilia na identificação de possíveis inconsistências ou necessidades de transformação dos dados para as etapas seguintes.
+
+
+### 📊📦 Conhecendo o banco de dados com a função `skim` do pacote `{skimr}`
+
+```{r}
+emissions_sources_forestry |> 
+  skimr::skim()
+```
+
 
 ### emissions_quantity
 
@@ -111,6 +179,7 @@ emissions_sources_forestry |>
   ggplot2::facet_wrap(~biome_sig)+
   ggplot2::theme_bw()
 ```
+
 ### activity
 
 ```{r}
@@ -148,6 +217,7 @@ emissions_sources_forestry |>
   ggplot2::facet_wrap(~biome_sig)+
   ggplot2::theme_bw()
 ```
+
 ### capacity
 
 ```{r}
@@ -183,3 +253,5 @@ emissions_sources_forestry |>
   ggplot2::facet_wrap(~biome_sig)+
   ggplot2::theme_bw()
 ```
+
+

@@ -238,9 +238,7 @@ base_sigla_uf <- dados_emissoes |>
 readr::write_rds(base_sigla_uf,"../data/states_biom_conser_ind-br.rds")
 ```
 
-Criando uma nova coluna chamada `biomes` que é uma versão "ajustada" do `biome`
-Faz várias reclassificações baseadas em: Nome original do bioma (biome) e condições de latitude (lat) e longitude (lon).
-
+Criando uma nova coluna chamada `biomes` que é uma versão "ajustada" do `biome` Faz várias reclassificações baseadas em: Nome original do bioma (biome) e condições de latitude (lat) e longitude (lon).
 
 ```{r}
 base_sigla_uf <- readr::read_rds("../data/states_biom_conser_ind-br.rds")
@@ -265,7 +263,7 @@ base_sigla_uf <- base_sigla_uf |>
 
 ### 📦 Função `get_geobr_municipaly()`
 
-serve para determinar a qual município a partir do estado  pertence um ponto geográfico, com base nas coordenadas `x` (longitude) e `y` (latitude), o estado a partir da geometria do municipio `municipaly`.
+serve para determinar a qual município a partir do estado pertence um ponto geográfico, com base nas coordenadas `x` (longitude) e `y` (latitude), o estado a partir da geometria do municipio `municipaly`.
 
 ```{r}
 get_geobr_municipaly <- function(x, y, state, geobr_obj){
@@ -299,6 +297,7 @@ get_geobr_municipaly(-47.9292, -15.7801, "DF",municipality) # → (Brasília)
 get_geobr_municipaly(-47.2, -23.1,"SP", municipality) # → (Indaiatuba)
 get_geobr_municipaly(-57.97413, -22.18186,"SP", municipality) # → (Other)
 ```
+
 Vamos criar uma nova base com os pontos classificados por município
 
 ```{r}
@@ -310,7 +309,7 @@ base_sigla_uf_muni <- base_sigla_uf |>
 
 ### 📁 Mesclando e Salvando a base
 
-Buscar as regiões do Brasil  a partir de dados oficiais do IBGE, previamente salvos em `df_nome.rds`. Posteriormente, vamos mesclar as bases e salvar na pasta `data` com o nome `emissions_sources.rds`. 
+Buscar as regiões do Brasil a partir de dados oficiais do IBGE, previamente salvos em `df_nome.rds`. Posteriormente, vamos mesclar as bases e salvar na pasta `data` com o nome `emissions_sources.rds`.
 
 ```{r, eval = FALSE}
 brazil_ids <- readr::read_rds("../data/df_nome.rds")
