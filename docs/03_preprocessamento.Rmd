@@ -23,9 +23,9 @@ emissions_sources <- readr::read_rds("../data/emissions_sources.rds")
 
 ### 🔎 Validação dos dados (ano = 2021)
 
-Após o tratamento, os dados serão analisados e comparados com as informações originais do site Climate TRACE, a fim de verificar a consistência e a qualidade do processamento.
+Após o tratamento, os dados foram analisados e comparados com as informações originais do site [Climate TRACE](https://climatetrace.org/), com o objetivo de verificar a consistência e a qualidade do processamento.
 
-Ao buscar o município de "Jaboticabal" na plataforma Climate TRACE, são apresentadas várias categorias de dados, referentes às emissões de gases de efeito estufa em diferentes níveis geográficos e fontes.
+Ao buscar o município de **"Jaboticabal"** na plataforma, são apresentadas várias categorias de dados, referentes às emissões de gases de efeito estufa em diferentes níveis geográficos e fontes.
 
 ![](../img/ct_tutorial_05.jpg)
 
@@ -34,11 +34,12 @@ As principais categorias encontradas são:
 -   **City** - Jaboticabal Urban Area, BR: Refere-se à área urbana de Jaboticabal e apresenta dados de emissões provenientes das atividades dentro dessa zona, como transporte, indústria e outros fatores urbanos.
 
 ![](../img/ct_tutorial_06.jpg)
+
 ```{r}
-emissions_sources |> 
-  dplyr::filter(
-    source_name == "Jaboticabal" | muni == "Jaboticabal",
-    year == 2021,
+emissions_sources |>
+    dplyr::filter(
+    stringr::str_detect(source_name, "Jaboticabal") | muni == "Jaboticabal",
+    year == 2024,
     !subsector %in% c("forest-land-clearing",
                      "forest-land-degradation",
                      "forest-land-fires",
@@ -46,12 +47,11 @@ emissions_sources |>
                      "shrubgrass-fires",
                      "wetland-fires"),
     # sector != "forestry-and-land-use"
-    ) |>  
- dplyr::group_by(lat,sector) |>
+    ) |>
+ dplyr::group_by(sector) |>
   dplyr::summarise(
     emissions_quantity_sum = sum(emissions_quantity, na.rm = TRUE)
   ) |>
-  dplyr::group_by(lat) |>
   dplyr::mutate(
    emissions_quantity_cumsum = cumsum(emissions_quantity_sum)
   )
@@ -60,7 +60,6 @@ emissions_sources |>
 -   **Country** - Jaboticabal Municipality, São Paulo State, BRA: Relacionado ao município de Jaboticabal como um todo, esta categoria inclui dados sobre as emissões em áreas rurais e urbanas, englobando fontes como agricultura e uso do solo.
 
 -   **Asset**: Refere-se a fontes específicas de emissões dentro da cidade ou município, como fábricas, usinas de energia ou instalações industriais. Cada "asset" tem dados específicos sobre suas emissões, permitindo uma análise mais detalhada.
-
 
 ### ⏳ Filtrando os dados para `forestry-and-land-use` e selecionando variáveis para a análise.
 
@@ -153,14 +152,12 @@ Nesta seção, serão construídos histogramas e boxplots para avaliar a distrib
 
 A combinação dos dois gráficos para cada variável permite uma análise exploratória robusta e auxilia na identificação de possíveis inconsistências ou necessidades de transformação dos dados para as etapas seguintes.
 
-
 ### 📊📦 Conhecendo o banco de dados com a função `skim` do pacote `{skimr}`
 
 ```{r}
 emissions_sources_forestry |> 
   skimr::skim()
 ```
-
 
 ### emissions_quantity
 
@@ -173,10 +170,10 @@ iiq <- q3-q1
 emissions_sources_forestry |>
   dplyr::filter(emissions_quantity > q1-1.5*iiq, emissions_quantity<q3+1.5*iiq) |>
   tidyr::drop_na() |>
-  ggplot2::ggplot(ggplot2::aes(x =emissions_quantity, y=..density.., fill=biome_sig)) +
+  ggplot2::ggplot(ggplot2::aes(x =emissions_quantity, y=..density.., fill=biomes_sig)) +
   ggplot2::geom_histogram(boundary=0, color="black",
                           bins = 100) +
-  ggplot2::facet_wrap(~biome_sig)+
+  ggplot2::facet_wrap(~biomes_sig)+
   ggplot2::theme_bw()
 ```
 
@@ -192,10 +189,10 @@ emissions_sources_forestry |>
   # dplyr::select(activity,year) |>
   dplyr::filter(activity > q1-0.5*iiq, activity<q3*.01) |>
   tidyr::drop_na() |>
-  ggplot2::ggplot(ggplot2::aes(x =activity, y=..density.., fill=biome_sig)) +
+  ggplot2::ggplot(ggplot2::aes(x =activity, y=..density.., fill=biomes_sig)) +
   ggplot2::geom_histogram(boundary=0, color="black",
                           bins = 50) +
-  ggplot2::facet_wrap(~biome_sig)+
+  ggplot2::facet_wrap(~biomes_sig)+
   ggplot2::theme_bw()
 ```
 
@@ -211,10 +208,10 @@ emissions_sources_forestry |>
   # dplyr::select(emissions_factor,year) |>
   dplyr::filter(emissions_factor > q1-0.5*iiq, emissions_factor<q3+0.5*iiq) |>
   tidyr::drop_na() |>
-  ggplot2::ggplot(ggplot2::aes(x =emissions_factor, y = ..density.. ,fill=biome_sig)) +
+  ggplot2::ggplot(ggplot2::aes(x =emissions_factor, y = ..density.. ,fill=biomes_sig)) +
   ggplot2::geom_histogram(boundary=0, color="black",
                           bins = 50) +
-  ggplot2::facet_wrap(~biome_sig)+
+  ggplot2::facet_wrap(~biomes_sig)+
   ggplot2::theme_bw()
 ```
 
@@ -229,10 +226,10 @@ iiq <- q3-q1
 emissions_sources_forestry |>
   dplyr::filter(capacity > q1-3.5*iiq, capacity<q3+3.5*iiq) |>
   tidyr::drop_na() |>
-  ggplot2::ggplot(ggplot2::aes(x =capacity, y=..density.., fill=biome_sig)) +
+  ggplot2::ggplot(ggplot2::aes(x =capacity, y=..density.., fill=biomes_sig)) +
   ggplot2::geom_histogram(boundary=0, color="black",
                           bins = 100) +
-  ggplot2::facet_wrap(~biome_sig)+
+  ggplot2::facet_wrap(~biomes_sig)+
   ggplot2::theme_bw()
 ```
 
@@ -247,11 +244,9 @@ iiq <- q3-q1
 emissions_sources_forestry |>
   dplyr::filter(capacity_factor > q1-0.5*iiq, capacity_factor<q3*.001) |>
   tidyr::drop_na() |>
-  ggplot2::ggplot(ggplot2::aes(x =capacity_factor, y=..density..,fill=biome_sig)) +
+  ggplot2::ggplot(ggplot2::aes(x =capacity_factor, y=..density..,fill=biomes_sig)) +
   ggplot2::geom_histogram(boundary=0, color="black",
                           bins = 50) +
-  ggplot2::facet_wrap(~biome_sig)+
+  ggplot2::facet_wrap(~biomes_sig)+
   ggplot2::theme_bw()
 ```
-
-

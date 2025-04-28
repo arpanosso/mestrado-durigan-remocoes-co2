@@ -1,7 +1,7 @@
 ---
 title: "02_tratamento_dados"
 output: html_document
-date: "2025-04-26"
+date: "2025-04-28"
 ---
 
 ```{r setup, include=FALSE}
@@ -41,7 +41,7 @@ Para alguns setores, há dados geoespaciais adicionais não incluídos neste pac
 
 Para mais informações sobre a origem, metodologia e estrutura dos dados utilizados, acesse o documento oficial disponibilizado pela Climate TRACE:
 
-📥 Clique aqui para baixar o arquivo [about_the_data.pdf](https://arpanosso.github.io//mestrado-durigan-remocoes-co2//about_the_data.pdf) e [about_the_data_v4_2_0.pdf](https://arpanosso.github.io//mestrado-durigan-remocoes-co2//about_the_data_v4_2_0.pdf)
+### 📥 Clique aqui para baixar o arquivo [about_the_data.pdf](https://arpanosso.github.io//mestrado-durigan-remocoes-co2//about_the_data.pdf) e [about_the_data_v4_2_0.pdf](https://arpanosso.github.io//mestrado-durigan-remocoes-co2//about_the_data_v4_2_0.pdf)
 
 ### 🔍📁 Encontrando os arquivos `.csv`
 
@@ -52,13 +52,13 @@ Para esta análise, vamos utilizar os arquivos no formato:
 Esses arquivos contêm as estimativas anuais/mensais de emissões e remoções de CO₂ organizadas por município, subsetor e etc.
 
 ```{r}
-emissions_sources_files <- list.files("../data-raw/BRA/",
+emissions_sources_files <- list.files("../data-raw/",
              full.names = TRUE,
              recursive = TRUE,
-           pattern = "emissions_sources.csv")
+           pattern = "emissions_sources_v4_2_0.csv")
 ```
 
-### 🛠️ Criando função para ler$1$ arquivo
+### 🛠️ Criando função para ler $1$ arquivo
 
 A função `my_file_read` recebe o caminho de um arquivo `.csv` como entrada, lê o conteúdo do arquivo, remove as colunas que começam com "other" (colunas auxiliares menos relevantes para a análise), e adiciona uma nova coluna chamada `directory` contendo o caminho original do arquivo, útil para rastrear a origem dos dados em etapas subsequentes.
 
@@ -94,7 +94,7 @@ dados_emissoes <- purrr::map_dfr(
 
 ### 🛠️ Tratamento (preprocessing/transformation):
 
-Agora precisamos converter tipos de dados (como de character para Date), criar novas variáveis (como o year a partir de end_time) e reorganizar ou transformar variáveis para análise.
+Agora precisamos converter tipos de dados (como de character para Date), criar novas variáveis (como o year a partir de end_time) e reorganizar ou transformar variáveis para análise. 
 
 ```{r}
 # Tratanto as colunas de data
@@ -106,8 +106,17 @@ dados_emissoes <- dados_emissoes |>
     modified_date = lubridate::as_date(modified_date),
     year = lubridate::year(end_time),
     month = lubridate::month(end_time),
-    directory = stringr::str_remove(directory,"../data-raw/BRA/DATA/|_emissions_sources.csv"),
+    source_type = ifelse(
+      is.na(source_type),
+      ifelse(stringr::str_detect(source_name,"Municipality"),
+             "Municipality",
+             ifelse(stringr::str_detect(source_name,"Urban Area"),
+                    "Urban Area",NA)),source_type),
+    directory = stringr::str_remove(
+      directory,"../data-raw/BRA/DATA/|_emissions_sources_v4_2_0.csv"
+      ),
    )
+dplyr::glimpse(dados_emissoes)
 ```
 
 ### 🌎 Carregando dados geográficos do Brasil
@@ -129,6 +138,7 @@ Essas camadas podem ser sobrepostas a dados de emissões para entender a distrib
 Para maiores informações acesse [Introduction to geobr (R)](https://cran.r-project.org/web/packages/geobr/vignettes/intro_to_geobr.html)
 
 ```{r}
+country_br <- geobr::read_country(showProgress = FALSE)
 municipality <- geobr::read_municipality(showProgress = FALSE)|> 
   dplyr::rename(target = name_muni )
 states <- geobr::read_state(showProgress = FALSE) |> 
@@ -140,6 +150,44 @@ conservation <- geobr::read_conservation_units(showProgress = FALSE) |>
 indigenous <- geobr::read_indigenous_land(showProgress = FALSE) |> 
   dplyr::rename(target = terrai_nom)
 ```
+
+
+### 🗺️ Plotando espacialmente os ponto
+
+Nesta etapa, vamos representar os dados no espaço geográfico, gerando mapas que permitem visualizar a distribuição dos pontos de interesse. A plotagem espacial é fundamental para identificar padrões, áreas de maior concentração e possíveis anomalias nos dados.
+
+Criando o mapa com sobreposição
+
+Terras Indígenas reconhecidas
+
+```{r}
+indigenous    |> 
+  ggplot2::ggplot() +
+  ggplot2::geom_sf(fill="white", color="black",
+          size=.15, show.legend = FALSE) +
+  ggplot2::geom_point(
+    data = dados_emissoes  |> 
+      dplyr::filter(
+        year == 2021),
+     ggplot2::aes(lon,lat)) +
+  ggplot2::theme_bw()
+```
+
+Áreas de conservação
+
+```{r}
+conservation    |> 
+  ggplot2::ggplot() +
+  ggplot2::geom_sf(fill="white", color="black",
+          size=.15, show.legend = FALSE) +
+  ggplot2::geom_point(
+    data = dados_emissoes  |> 
+      dplyr::filter(
+        year == 2021),
+     ggplot2::aes(lon,lat)) +
+  ggplot2::theme_bw()
+```
+
 
 ### 🧭 Função para verificar se pontos estão dentro de um polígono
 
@@ -206,6 +254,8 @@ get_geobr(-47.9292, -15.7801, conservation) # → "Other"
 get_geobr(-47.9292, -15.7801, indigenous) # → "Other"
 ```
 
+
+
 Vamos criar um arquivo com todos os pares de coordenadas que ocorrem na base de dados e classificar.
 
 `dados_emissoes |> group_by(lon, lat)`: Agrupa os dados por coordenadas geográficas (longitude e latitude).
@@ -227,8 +277,13 @@ Vamos criar um arquivo com todos os pares de coordenadas que ocorrem na base de 
 `write_rds(...)`: Salva o resultado (`base_sigla_uf`) em um arquivo `.rds` para usar depois sem precisar recalcular tudo.
 
 ```{r, eval=FALSE}
-base_sigla_uf <- dados_emissoes |> 
-  dplyr::distinct(lon, lat) |> 
+base_sigla_uf <- dados_emissoes |>
+  dplyr::group_by(lon, lat) |>
+  dplyr::summarise(
+    year_m = mean(year)
+  ) |>
+  dplyr::select(-year_m) |>
+  # tidyr::drop_na() |>
   dplyr::mutate(
     state = get_geobr(lon, lat, states),
     biome = get_geobr(lon, lat, biomes),
@@ -244,7 +299,7 @@ Criando uma nova coluna chamada `biomes` que é uma versão "ajustada" do `biome
 base_sigla_uf <- readr::read_rds("../data/states_biom_conser_ind-br.rds")
 base_sigla_uf <- base_sigla_uf |>
   dplyr::mutate(
-    biomes =
+    biomes_sig =
       dplyr::case_when(
         biome=='Other'& lon >=-45 & lat <0~'AF',
         biome=='Amazônia'~'AMZ',
@@ -300,7 +355,7 @@ get_geobr_municipaly(-57.97413, -22.18186,"SP", municipality) # → (Other)
 
 Vamos criar uma nova base com os pontos classificados por município
 
-```{r}
+```{r, eval= FALSE}
 base_sigla_uf_muni <- base_sigla_uf |> 
   dplyr::mutate(
     muni = get_geobr_municipaly(lon, lat, state, municipality)
@@ -325,7 +380,6 @@ dplyr::left_join(
     dplyr::ungroup(),
   by = c("lat","lon")
 ) |> 
-  dplyr::rename(biome_sig = biomes) |>
   tibble::as_tibble() |> 
   readr::write_rds( "../data/emissions_sources.rds")
 ```
