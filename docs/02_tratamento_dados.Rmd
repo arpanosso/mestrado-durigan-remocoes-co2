@@ -15,7 +15,7 @@ knitr::opts_chunk$set(echo = TRUE,
 
 Permissões e Uso: Todos os dados do Climate TRACE estão disponíveis gratuitamente sob a Licença Pública Internacional Creative Commons Atribuição 4.0, salvo indicação em contrário.
 
-Forma sugerida de citação: Para fontes de diferentes setores ou dados globais acessados e baixados, utilize a seguinte citação: Climate TRACE (2025). Climate TRACE Emissions Inventory v4.2.0. Disponível em: <https://climatetrace.org>. Acessado em: [inserir data de acesso].
+Forma sugerida de citação: Para fontes de diferentes setores ou dados globais acessados e baixados, utilize a seguinte citação: Climate TRACE (2025). Climate TRACE Emissions Inventory v4.2.0. Disponível em: <https://climatetrace.org>. Acessado em: **28/04/2025**.
 
 Para citações específicas por setor, consulte a seção correspondente na plataforma.
 
@@ -63,7 +63,6 @@ emissions_sources_files <- list.files("../data-raw/",
 A função `my_file_read` recebe o caminho de um arquivo `.csv` como entrada, lê o conteúdo do arquivo, remove as colunas que começam com "other" (colunas auxiliares menos relevantes para a análise), e adiciona uma nova coluna chamada `directory` contendo o caminho original do arquivo, útil para rastrear a origem dos dados em etapas subsequentes.
 
 ```{r}
-# criando a função
 my_file_read <- function(file_path) {
   read.csv(file_path, 
            stringsAsFactors = FALSE)  |> 
@@ -112,10 +111,12 @@ dados_emissoes <- dados_emissoes |>
              "Municipality",
              ifelse(stringr::str_detect(source_name,"Urban Area"),
                     "Urban Area",NA)),source_type),
+    source_name_trat = stringr::str_remove(source_name," Municipality| Urban Area"),
     directory = stringr::str_remove(
       directory,"../data-raw/BRA/DATA/|_emissions_sources_v4_2_0.csv"
       ),
-   )
+   ) |> 
+  dplyr::relocate(source_id, source_name, source_name_trat)
 dplyr::glimpse(dados_emissoes)
 ```
 

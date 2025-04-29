@@ -38,23 +38,24 @@ As principais categorias encontradas são:
 ```{r}
 emissions_sources |>
     dplyr::filter(
-    stringr::str_detect(source_name, "Jaboticabal") | muni == "Jaboticabal",
-    year == 2024,
-    !subsector %in% c("forest-land-clearing",
-                     "forest-land-degradation",
-                     "forest-land-fires",
-                     "removals",
-                     "shrubgrass-fires",
-                     "wetland-fires"),
+    stringr::str_detect(source_name, "Jaboticabal|JABOTICABAL") | muni == "Jaboticabal",
+    year == 2021,
+    # !subsector %in% c("forest-land-clearing",
+    #                  "forest-land-degradation",
+    #                  "forest-land-fires",
+    #                  "removals",
+    #                  "shrubgrass-fires",
+    #                  "wetland-fires"),
     # sector != "forestry-and-land-use"
-    ) |>
- dplyr::group_by(sector) |>
-  dplyr::summarise(
-    emissions_quantity_sum = sum(emissions_quantity, na.rm = TRUE)
-  ) |>
-  dplyr::mutate(
-   emissions_quantity_cumsum = cumsum(emissions_quantity_sum)
-  )
+    ) #|> #View()
+ # dplyr::group_by(source_type) |>
+ #  dplyr::summarise(
+ #    emissions_quantity_sum = sum(emissions_quantity, na.rm = TRUE)
+ #  ) |>
+ #  dplyr::ungroup() |> 
+ #  dplyr::mutate(
+ #   emissions_quantity_cumsum = cumsum(emissions_quantity_sum)
+ #  )
 ```
 
 -   **Country** - Jaboticabal Municipality, São Paulo State, BRA: Relacionado ao município de Jaboticabal como um todo, esta categoria inclui dados sobre as emissões em áreas rurais e urbanas, englobando fontes como agricultura e uso do solo.
