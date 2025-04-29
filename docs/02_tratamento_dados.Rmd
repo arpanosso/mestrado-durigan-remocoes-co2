@@ -97,8 +97,21 @@ dados_emissoes <- purrr::map_dfr(
 Agora precisamos converter tipos de dados (como de character para Date), criar novas variáveis (como o year a partir de end_time) e reorganizar ou transformar variáveis para análise. 
 
 ```{r}
-# Tratanto as colunas de data
-dados_emissoes <- dados_emissoes |> 
+# Dicionário: padrão -> substituição
+correcoes <- c(
+  "Itapoã" = "Itapoa",
+  "Maraba" = "Marabá",
+  "Ribeirao" = "Ribeirão",
+  "Sao Goncalo" = "São Gonçalo",
+  "Sao Jose" = "São José",
+  "Ribeirao" = "Ribeirão",
+  "Ceilândia" = "Brasília",
+  "Gama" = "Brasília",
+  "Icaivera" = "Betim",
+  "Taquaralto" = "Palmas"
+)
+
+dados_emissoes_cor <- dados_emissoes |> 
   dplyr::mutate(
     start_time = lubridate::as_date(start_time),
     end_time = lubridate::as_date(end_time),
@@ -106,6 +119,7 @@ dados_emissoes <- dados_emissoes |>
     modified_date = lubridate::as_date(modified_date),
     year = lubridate::year(end_time),
     month = lubridate::month(end_time),
+    source_name = stringr::str_replace_all(source_name, correcoes),
     source_type = ifelse(is.na(source_type),
                          ifelse(stringr::str_detect(source_name,"Municipality"),
                                 "Municipality",          ifelse(stringr::str_detect(source_name,"Urban Area"),"Urban Area",NA)),source_type),source_name_trat = stringr::str_remove(source_name," Municipality| Urban Area"),
@@ -114,11 +128,11 @@ dados_emissoes <- dados_emissoes |>
     ),
   ) |> 
   dplyr::relocate(source_id, source_name, source_name_trat)
-dplyr::glimpse(dados_emissoes)
+dplyr::glimpse(dados_emissoes_cor)
 ```
 
 ```{r}
-dados_emissoes_municipality <-  dados_emissoes |> 
+dados_emissoes_municipality <-  dados_emissoes_cor |> 
   dplyr::filter(source_type == "Municipality") |> 
   dplyr::group_by(source_name_trat,lat,lon) |> 
   dplyr::summarise(
@@ -140,23 +154,21 @@ get_lon <- function(muni){
   return(lon)
 }
 
-dados_emissoes <- dados_emissoes |> 
+dados_emissoes_cor <- dados_emissoes_cor |> 
   dplyr::group_by(source_name) |> 
   dplyr::mutate(
     lat=ifelse(is.na(lat),get_lat(source_name_trat),lat),
     lon=ifelse(is.na(lon),get_lon(source_name_trat),lon)
   ) 
 
+dados_emissoes_cor |> 
+  dplyr::filter(is.na(lat)) |> dplyr::pull(source_name) # |> unique()
+```
+
+
+```{r}
 dados_emissoes |> 
-  dplyr::filter(source_type == "Urban Area" | source_type == "Municipality") |> 
-  dplyr::group_by(source_name_trat,source_type) |> 
-  dplyr::summarise(
-    lat=mean(lat),
-    lon=mean(lon)
-  )
-dados_emissoes |> 
-  dplyr::filter(is.na(lat)) |> dplyr::pull(source_name) |> unique()
-dados_emissoes_municipality |> View()
+  dplyr::filter(stringr::str_detect(source_name,"Sao Joao d") )
 ```
 
 
