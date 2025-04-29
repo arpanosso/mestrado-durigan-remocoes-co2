@@ -106,60 +106,88 @@ dados_emissoes <- dados_emissoes |>
     modified_date = lubridate::as_date(modified_date),
     year = lubridate::year(end_time),
     month = lubridate::month(end_time),
-    source_type = ifelse(
-      is.na(source_type),
-      ifelse(stringr::str_detect(source_name,"Municipality"),
-             "Municipality",
-             ifelse(stringr::str_detect(source_name,"Urban Area"),
-                    "Urban Area",NA)),source_type),
-    source_name_trat = stringr::str_remove(source_name," Municipality| Urban Area"),
+    source_type = ifelse(is.na(source_type),
+                         ifelse(stringr::str_detect(source_name,"Municipality"),
+                                "Municipality",          ifelse(stringr::str_detect(source_name,"Urban Area"),"Urban Area",NA)),source_type),source_name_trat = stringr::str_remove(source_name," Municipality| Urban Area"),
     directory = stringr::str_remove(
       directory,"../data-raw/BRA/DATA/|_emissions_sources_v4_2_0.csv"
-      ),
-   ) |> 
+    ),
+  ) |> 
   dplyr::relocate(source_id, source_name, source_name_trat)
 dplyr::glimpse(dados_emissoes)
 ```
 
 ```{r}
-dados_emissoes_urban_area <-  dados_emissoes |> 
-  dplyr::filter(stringr::str_detect(source_name,"Urban Area"))
+dados_emissoes_municipality <-  dados_emissoes |> 
+  dplyr::filter(source_type == "Municipality") |> 
+  dplyr::group_by(source_name_trat,lat,lon) |> 
+  dplyr::summarise(
+    lon = mean(lon, na.rm=TRUE),
+    lat = mean(lat, na.rm=TRUE)
+  ) |> dplyr::ungroup()
 
-for(i in 1:nrow(dados_emissoes_urban_area)){
-    source <- stringr::str_remove(dados_emissoes_urban_area[i,"source_name"]," Urban Area")
-    df_aux <- dados_emissoes |> 
-      dplyr::filter(stringr::str_detect(source_name,source)) |> 
-      dplyr::group_by(lat) |> dplyr::n_groups()
-     if((df_aux)>2) print(source)
+get_lat <- function(muni){
+  muni <- muni[1]
+  lat <- dados_emissoes_municipality |> 
+    dplyr::filter(source_name_trat == muni) |> dplyr::slice(1) |> dplyr::pull(lat)
+  return(lat)
 }
 
-dados_emissoes_urban_area$geometry_ref |> unique()
-sf::st_layers("../data-raw/GHS_FUA_UCDB2015_GLOBE_R2019A_54009_1K_V1_0/GHS_FUA_UCDB2015_GLOBE_R2019A_54009_1K_V1_0.gpkg")
+get_lon <- function(muni){
+  muni <- muni[1]
+  lon <- dados_emissoes_municipality |> 
+    dplyr::filter(source_name_trat == muni) |> dplyr::slice(1) |> dplyr::pull(lon)
+  return(lon)
+}
 
-
-
-
-geo <- sf::read_sf("../data-raw/GHS_FUA_UCDB2015_GLOBE_R2019A_54009_1K_V1_0/GHS_FUA_UCDB2015_GLOBE_R2019A_54009_1K_V1_0.gpkg")
-
-# 2. Ver as primeiras linhas (com geometria)
-tbl_geo <- geo |> 
-  dplyr::filter(Cntry_name == "Brazil") |> 
-  tibble::as.tibble()
-tbl_geo$geom[1] |>  plot()
-    purrr::pluck(1) |> 
-    as.matrix()
-
-geo_df <- geo  |>  
-  sf::st_drop_geometry()
-
-geo_df|> 
-  dplyr::filter(Cntry_name == "Brazil")
+dados_emissoes <- dados_emissoes |> 
+  dplyr::group_by(source_name) |> 
+  dplyr::mutate(
+    lat=ifelse(is.na(lat),get_lat(source_name_trat),lat),
+    lon=ifelse(is.na(lon),get_lon(source_name_trat),lon)
+  ) 
 
 dados_emissoes |> 
-  dplyr::filter(stringr::str_detect(source_name,"Cruzeiro do SulUrban Area"))
+  dplyr::filter(source_type == "Urban Area" | source_type == "Municipality") |> 
+  dplyr::group_by(source_name_trat,source_type) |> 
+  dplyr::summarise(
+    lat=mean(lat),
+    lon=mean(lon)
+  )
+dados_emissoes |> 
+  dplyr::filter(is.na(lat)) |> dplyr::pull(source_name) |> unique()
+dados_emissoes_municipality |> View()
+```
 
-dados_emissoes_urban_area |> 
-  readr::write_csv("../output/dados_emissoes_urban_area.csv")
+
+```{r}
+# dados_emissoes_urban_area$geometry_ref |> unique()
+# sf::st_layers("../data-raw/GHS_FUA_UCDB2015_GLOBE_R2019A_54009_1K_V1_0/GHS_FUA_UCDB2015_GLOBE_R2019A_54009_1K_V1_0.gpkg")
+# 
+# 
+# 
+# 
+# geo <- sf::read_sf("../data-raw/GHS_FUA_UCDB2015_GLOBE_R2019A_54009_1K_V1_0/GHS_FUA_UCDB2015_GLOBE_R2019A_54009_1K_V1_0.gpkg")
+# 
+# # 2. Ver as primeiras linhas (com geometria)
+# tbl_geo <- geo |> 
+#   dplyr::filter(Cntry_name == "Brazil") |> 
+#   tibble::as.tibble()
+# tbl_geo$geom[1] |>  plot()
+#     purrr::pluck(1) |> 
+#     as.matrix()
+# 
+# geo_df <- geo  |>  
+#   sf::st_drop_geometry()
+# 
+# geo_df|> 
+#   dplyr::filter(Cntry_name == "Brazil")
+# 
+# dados_emissoes |> 
+#   dplyr::filter(stringr::str_detect(source_name,"Cruzeiro do SulUrban Area"))
+# 
+# dados_emissoes_urban_area |> 
+#   readr::write_csv("../output/dados_emissoes_urban_area.csv")
 ```
 
 
