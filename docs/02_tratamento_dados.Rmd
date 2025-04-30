@@ -94,12 +94,15 @@ dados_emissoes <- purrr::map_dfr(
 
 ### 🛠️ Tratamento (preprocessing/transformation):
 
-Agora precisamos converter tipos de dados (como de character para Date), criar novas variáveis (como o year a partir de end_time) e reorganizar ou transformar variáveis para análise. 
+Agora precisamos converter tipos de dados (como de character para Date), criar novas variáveis (como o year a partir de end_time) e reorganizar ou transformar variáveis para análise.
+
+**Correções nominais**
+
+Criamos uma tabela de correções para padronizar nomes de localidades com acentuação incorreta ou variações de grafia observadas nos dados originais.
 
 ```{r}
-# Dicionário: padrão -> substituição
 correcoes <- c(
-  "Itapoã" = "Itapoa",
+  "Itapoa" = "Itapoá",
   "Maraba" = "Marabá",
   "Ribeirao" = "Ribeirão",
   "Sao Goncalo" = "São Gonçalo",
@@ -107,11 +110,19 @@ correcoes <- c(
   "Ribeirao" = "Ribeirão",
   "Ceilândia" = "Brasília",
   "Gama" = "Brasília",
+  "Itapoã" = "Brasília",
   "Icaivera" = "Betim",
-  "Taquaralto" = "Palmas"
+  "Taquaralto" = "Palmas",
+  "São João del-Rei" = "São João del Rei"
 )
+```
 
-dados_emissoes_cor <- dados_emissoes |> 
+**Tratamento de nomes e tipos de fonte**
+
+Aplicou-se a tabela de correções aos nomes das fontes emissoras (`source_name`) e foram atribuídos os tipos de fonte (`source_type`) quando ausentes, com base em padrões contidos nos nomes originais. Além disso, foi criada uma nova coluna com o nome da fonte tratado (`source_name_trat`), removendo os sufixos descritivos como `"Municipality"` e `"Urban Area"`. Em adição a coluna `directory`, que armazena o caminho dos arquivos originais, foi tratada para remover trechos desnecessários, mantendo apenas a estrutura hierárquica útil à análise. Por fim, as colunas foram reorganizadas para facilitar a visualização e manuseio dos dados, colocando identificadores e nomes das fontes no início da tabela.
+
+```{r}
+dados_emissoes <- dados_emissoes |> 
   dplyr::mutate(
     start_time = lubridate::as_date(start_time),
     end_time = lubridate::as_date(end_time),
@@ -122,24 +133,33 @@ dados_emissoes_cor <- dados_emissoes |>
     source_name = stringr::str_replace_all(source_name, correcoes),
     source_type = ifelse(is.na(source_type),
                          ifelse(stringr::str_detect(source_name,"Municipality"),
-                                "Municipality",          ifelse(stringr::str_detect(source_name,"Urban Area"),"Urban Area",NA)),source_type),source_name_trat = stringr::str_remove(source_name," Municipality| Urban Area"),
+                                "Municipality",          ifelse(stringr::str_detect(source_name,"Urban Area"),"Urban Area",NA)),source_type),source_name_trat = stringr::str_remove(source_name,
+  " Municipality| Urban Area"),
     directory = stringr::str_remove(
       directory,"../data-raw/BRA/DATA/|_emissions_sources_v4_2_0.csv"
     ),
   ) |> 
   dplyr::relocate(source_id, source_name, source_name_trat)
-dplyr::glimpse(dados_emissoes_cor)
+dplyr::glimpse(dados_emissoes)
 ```
 
+Devido à exitência de valores de coordenadas como valores `NA`, associados à fontes do tipo `"Urban Area"`, esse trecho de código realiza tratamento geoespacial, garantindo que cada fonte emissora do tipo `"Municipality"` esteja corretamente associada a uma coordenada geográfica (latitude e longitude). O objeto `dados_emissoes_municipality` é criado e será usado dentro das funções a seguir busca de coordenadas geográficas e substituição de `NAs`.
+
 ```{r}
-dados_emissoes_municipality <-  dados_emissoes_cor |> 
+dados_emissoes_municipality <-  dados_emissoes |> 
   dplyr::filter(source_type == "Municipality") |> 
   dplyr::group_by(source_name_trat,lat,lon) |> 
   dplyr::summarise(
     lon = mean(lon, na.rm=TRUE),
     lat = mean(lat, na.rm=TRUE)
   ) |> dplyr::ungroup()
+```
 
+#### 🧩 Funções auxiliares para busca de coordenadas
+
+As funções `get_lat(muni)` e `get_lon(muni)` recebem um nome de município tratado, usam esse nome para filtrar a tabela `dados_emissoes_municipality` e retornam, respectivamente, a latitude e longitude associadas. O uso de `slice(1)` garante que apenas o primeiro valor seja retornado, mesmo que haja múltiplos registros. Portanto, é uma função de busca para preencher valores faltantes de `lat` e `lon` no `dados_emissoes`.
+
+```{r}
 get_lat <- function(muni){
   muni <- muni[1]
   lat <- dados_emissoes_municipality |> 
@@ -153,57 +173,21 @@ get_lon <- function(muni){
     dplyr::filter(source_name_trat == muni) |> dplyr::slice(1) |> dplyr::pull(lon)
   return(lon)
 }
+```
 
-dados_emissoes_cor <- dados_emissoes_cor |> 
+### 🔄 Atualização dos dados principais com coordenadas faltantes
+
+Inicalmente agrupamos os dados por `source_name` (nome original da fonte emissora) para que a função retorne os valores de `lat` e `lon` para cada `source_name_trat`. Em cada grupo, verifica-se `lat` ou `lon` está ausente. Se estiver, busca o valor correspondente nas tabelas auxiliares, usando as funções criadas. Se não estiver ausente, mantém o valor original. Ao final, remove qualquer linha que ainda esteja sem `lat` (e, implicitamente, `lon`).
+
+```{r}
+dados_emissoes <- dados_emissoes |> 
   dplyr::group_by(source_name) |> 
   dplyr::mutate(
     lat=ifelse(is.na(lat),get_lat(source_name_trat),lat),
     lon=ifelse(is.na(lon),get_lon(source_name_trat),lon)
-  ) 
-
-dados_emissoes_cor |> 
-  dplyr::filter(is.na(lat)) |> dplyr::pull(source_name) # |> unique()
+  ) |> 
+  dplyr::filter(!is.na(lat))
 ```
-
-
-```{r}
-dados_emissoes |> 
-  dplyr::filter(stringr::str_detect(source_name,"Sao Joao d") )
-```
-
-
-```{r}
-# dados_emissoes_urban_area$geometry_ref |> unique()
-# sf::st_layers("../data-raw/GHS_FUA_UCDB2015_GLOBE_R2019A_54009_1K_V1_0/GHS_FUA_UCDB2015_GLOBE_R2019A_54009_1K_V1_0.gpkg")
-# 
-# 
-# 
-# 
-# geo <- sf::read_sf("../data-raw/GHS_FUA_UCDB2015_GLOBE_R2019A_54009_1K_V1_0/GHS_FUA_UCDB2015_GLOBE_R2019A_54009_1K_V1_0.gpkg")
-# 
-# # 2. Ver as primeiras linhas (com geometria)
-# tbl_geo <- geo |> 
-#   dplyr::filter(Cntry_name == "Brazil") |> 
-#   tibble::as.tibble()
-# tbl_geo$geom[1] |>  plot()
-#     purrr::pluck(1) |> 
-#     as.matrix()
-# 
-# geo_df <- geo  |>  
-#   sf::st_drop_geometry()
-# 
-# geo_df|> 
-#   dplyr::filter(Cntry_name == "Brazil")
-# 
-# dados_emissoes |> 
-#   dplyr::filter(stringr::str_detect(source_name,"Cruzeiro do SulUrban Area"))
-# 
-# dados_emissoes_urban_area |> 
-#   readr::write_csv("../output/dados_emissoes_urban_area.csv")
-```
-
-
-
 
 ### 🌎 Carregando dados geográficos do Brasil
 
@@ -236,7 +220,6 @@ conservation <- geobr::read_conservation_units(showProgress = FALSE) |>
 indigenous <- geobr::read_indigenous_land(showProgress = FALSE) |> 
   dplyr::rename(target = terrai_nom)
 ```
-
 
 ### 🗺️ Plotando espacialmente os ponto
 
@@ -273,7 +256,6 @@ conservation    |>
      ggplot2::aes(lon,lat)) +
   ggplot2::theme_bw()
 ```
-
 
 ### 🧭 Função para verificar se pontos estão dentro de um polígono
 
@@ -340,8 +322,6 @@ get_geobr(-47.9292, -15.7801, conservation) # → "Other"
 get_geobr(-47.9292, -15.7801, indigenous) # → "Other"
 ```
 
-
-
 Vamos criar um arquivo com todos os pares de coordenadas que ocorrem na base de dados e classificar.
 
 `dados_emissoes |> group_by(lon, lat)`: Agrupa os dados por coordenadas geográficas (longitude e latitude).
@@ -362,7 +342,7 @@ Vamos criar um arquivo com todos os pares de coordenadas que ocorrem na base de 
 
 `write_rds(...)`: Salva o resultado (`base_sigla_uf`) em um arquivo `.rds` para usar depois sem precisar recalcular tudo.
 
-```{r, eval=TRUE}
+```{r, eval=FALSE}
 base_sigla_uf <- dados_emissoes |>
   dplyr::group_by(lon, lat) |>
   dplyr::summarise(
@@ -379,7 +359,7 @@ base_sigla_uf <- dados_emissoes |>
 readr::write_rds(base_sigla_uf,"../data/states_biom_conser_ind-br.rds")
 ```
 
-Criando uma nova coluna chamada `biomes` que é uma versão "ajustada" do `biome` Faz várias reclassificações baseadas em: Nome original do bioma (biome) e condições de latitude (lat) e longitude (lon).
+Criando uma nova coluna chamada `biomes` que é uma versão "ajustada" do `biome` Faz várias reclassificações baseadas em: Nome original do bioma (`biome`) e condições de latitude (`lat`) e longitude (`lon`).
 
 ```{r}
 base_sigla_uf <- readr::read_rds("../data/states_biom_conser_ind-br.rds")
@@ -441,7 +421,7 @@ get_geobr_municipaly(-57.97413, -22.18186,"SP", municipality) # → (Other)
 
 Vamos criar uma nova base com os pontos classificados por município
 
-```{r, eval= TRUE}
+```{r, eval= FALSE}
 base_sigla_uf_muni <- base_sigla_uf |> 
   dplyr::mutate(
     muni = get_geobr_municipaly(lon, lat, state, municipality)
