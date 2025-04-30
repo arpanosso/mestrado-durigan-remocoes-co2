@@ -35,6 +35,8 @@ em formato HTML:
 - [`03_preprocessamento`](https://arpanosso.github.io//mestrado-durigan-remocoes-co2//03_preprocessamento.html)
   – Preparação dos dados para análise.
 
+## 👉 [DOWNLOAD A BASE](https://drive.google.com/file/d/1EbGu6pI62J9fTxx2roxeRx6_WL4pZsbG/view?usp=drive_link)
+
 ## 🔍 **Análise Exploratória dos Dados**
 
 Visualizações gráficas, estatísticas descritivas e inspeção de padrões

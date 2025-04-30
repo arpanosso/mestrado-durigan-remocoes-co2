@@ -40,7 +40,7 @@ Os scripts abaixo foram desenvolvidos em RMarkdown e estão disponíveis em form
 - [`02_tratamento_dados`](https://arpanosso.github.io//mestrado-durigan-remocoes-co2//02_tratamento_dados.html) – Faxina, filtragem e organização dos dados.  
 - [`03_preprocessamento`](https://arpanosso.github.io//mestrado-durigan-remocoes-co2//03_preprocessamento.html) – Preparação dos dados para análise.  
 
-
+## 👉 [DOWNLOAD A BASE](https://drive.google.com/file/d/1EbGu6pI62J9fTxx2roxeRx6_WL4pZsbG/view?usp=drive_link)
 
 ## 🔍 **Análise Exploratória dos Dados**  
   Visualizações gráficas, estatísticas descritivas e inspeção de padrões regionais e temporais.  
