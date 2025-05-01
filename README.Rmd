@@ -165,7 +165,7 @@ tab_stat |>
   ) |> 
   ggplot(aes(x=biomes_sig, y=Mean/1e6,fill=biomes_sig)) +
   geom_col(color="black",position = "dodge") +
-  labs(y = expression(paste("Activity (M t of  ", CO[2]," in living biomass per ha)")),
+  labs(y = expression(paste("Capacity (M t of  ", CO[2]," in living biomass per ha)")),
                             fill = "Biome") +
   scale_fill_viridis_d() +
   theme_bw()
