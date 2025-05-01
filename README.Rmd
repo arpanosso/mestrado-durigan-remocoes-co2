@@ -20,35 +20,161 @@ Repositório de apoio ao projeto de pesquisa de mestrado com foco na análise es
 
 ## 👨‍🔬 Autores
 
-- **Pedro Barbieri Durigan**  
-  Mestrando em Agronomia - Ciência do Solo  - FCAV/Unesp  
-  Email: [pedro.durigan@unesp.br](mailto:pedro.durigan@unesp.b)
-  
-- **Prof. Dr. Newton La Scala Júnior**  
-  Coorientador — Departamento de Ciências Exatas - FCAV/Unesp  
-  Email: [la.scala@unesp.br](mailto:la.scala@unesp.br)
+-   **Pedro Barbieri Durigan**\
+    Mestrando em Agronomia - Ciência do Solo - FCAV/Unesp\
+    Email: [pedro.durigan\@unesp.br](mailto:pedro.durigan@unesp.b)
 
-- **Prof. Dr. Alan Rodrigo Panosso**  
-  Coorientador — Departamento de Ciências Exatas - FCAV/Unesp  
-  Email: [alan.panosso@unesp.br](mailto:alan.panosso@unesp.br)
-  
+-   **Prof. Dr. Newton La Scala Júnior**\
+    Coorientador — Departamento de Ciências Exatas - FCAV/Unesp\
+    Email: [la.scala\@unesp.br](mailto:la.scala@unesp.br)
+
+-   **Prof. Dr. Alan Rodrigo Panosso**\
+    Coorientador — Departamento de Ciências Exatas - FCAV/Unesp\
+    Email: [alan.panosso\@unesp.br](mailto:alan.panosso@unesp.br)
+
 ## 📁 Etapas do Projeto
 
 Os scripts abaixo foram desenvolvidos em RMarkdown e estão disponíveis em formato HTML:
 
-- [`01_aquisicao_dados`](https://arpanosso.github.io//mestrado-durigan-remocoes-co2//01_aquisicao_dados.html) – Aquisição e download dos dados brutos.  
-- [`02_tratamento_dados`](https://arpanosso.github.io//mestrado-durigan-remocoes-co2//02_tratamento_dados.html) – Faxina, filtragem e organização dos dados.  
-- [`03_preprocessamento`](https://arpanosso.github.io//mestrado-durigan-remocoes-co2//03_preprocessamento.html) – Preparação dos dados para análise.  
+-   [`01_aquisicao_dados`](https://arpanosso.github.io//mestrado-durigan-remocoes-co2//01_aquisicao_dados.html) – Aquisição e download dos dados brutos.\
+-   [`02_tratamento_dados`](https://arpanosso.github.io//mestrado-durigan-remocoes-co2//02_tratamento_dados.html) – Faxina, filtragem e organização dos dados.\
+-   [`03_preprocessamento`](https://arpanosso.github.io//mestrado-durigan-remocoes-co2//03_preprocessamento.html) – Preparação dos dados para análise.
 
 ## 👉 [DOWNLOAD A BASE](https://drive.google.com/file/d/1EbGu6pI62J9fTxx2roxeRx6_WL4pZsbG/view?usp=drive_link)
 
-## 🔍 **Análise Exploratória dos Dados**  
-  Visualizações gráficas, estatísticas descritivas e inspeção de padrões regionais e temporais.  
+## 📦 **Carregando Pacotes e a Base de dados**
+
+Importante dropar as colunas `Other` e as emissões provenientes de áreas urbanas, uma vez que está estão incorporadas nos `source_type` igual a `Municipality`. Para essa análise, serão consideradas apenas as remoções e o ano até $2024$. Nesse caso, vamos transformar os dados de `emission_quantity` para valores positivos de remoções.
+
+```{r}
+library(tidyverse)
+library(geobr)
+source("R/graph-theme.R")
+emission_sources_removals <- read_rds("data/emissions_sources.rds") |> 
+  select(!starts_with("Other")) |> 
+  filter(
+    source_type == "Municipality",
+    subsector == "removals",
+    year <= 2024
+    ) |> 
+  mutate(
+    emissions_quantity = -1*emissions_quantity,
+    biomes_sig = ifelse(biomes_sig == "Other","AF",biomes_sig)
+  )
+```
 
 
-## 🧪 **Estatística Multivariada**  
-  Técnicas como Análise de Componentes Principais (PCA), agrupamentos (clustering) e correlações espaciais.  
+## 🔍 **Análise Exploratória dos Dados**
+
+Visualizações gráficas, estatísticas descritivas e inspeção de padrões regionais e temporais.
+
+```{r}
+country_br <- read_country(showProgress = FALSE)
+  country_br |> 
+    ggplot() + 
+    geom_sf(fill="white", color="black",
+          size=.15, show.legend = FALSE) +
+    geom_point( data = emission_sources_removals |> 
+       filter(year == 2021),
+       aes(lon,lat,colour = biomes_sig))+
+    labs(x="Longitude", y="Latitude")+
+    graph_theme()
+```
+
+Criando a  tabela da estatística descritiva para as remoções e **exportanto a tabela para pasta** `output`
+
+```{r}
+tab_stat <- emission_sources_removals |> 
+  group_by(year) |> 
+  summarise(
+    Sum = sum(emissions_quantity, na.rm = TRUE),
+    Mean = mean(emissions_quantity, na.rm = TRUE),
+    Median = median(emissions_quantity, na.rm = TRUE),
+    SD = sd(emissions_quantity, na.rm = TRUE),
+    SSE = SD/sqrt(n()),
+    Min = min(emissions_quantity, na.rm = TRUE),
+    Max = max(emissions_quantity, na.rm = TRUE),
+  )
+writexl::write_xlsx(tab_stat,"output/est-removals.xlsx")
+```
 
 
-## 🤖 **Modelagem Estatística e Preditiva**  
-  Aplicação de modelos de regressão, aprendizado de máquina e análise de variáveis importantes para a predição das remoções de CO₂.  
+Gráfico das remoções
+```{r}
+tab_stat |> 
+  ggplot(aes(x=year, y=Sum/1e6)) +
+  geom_col(color="black",fill="cyan4") +
+  labs(y = expression(paste("Removal (M t ",CO[2],"e)"))) +
+  theme_bw()
+```
+Criando a  tabela da estatística descritiva para activity e **exportanto a tabela para pasta** `output`
+
+```{r}
+tab_stat <- emission_sources_removals |> 
+  group_by(biomes_sig) |> 
+  summarise(
+    Sum = sum(activity, na.rm = TRUE),
+    Mean = mean(activity, na.rm = TRUE),
+    Median = median(activity, na.rm = TRUE),
+    SD = sd(activity, na.rm = TRUE),
+    SSE = SD/sqrt(n()),
+    Min = min(activity, na.rm = TRUE),
+    Max = max(activity, na.rm = TRUE),
+  )
+writexl::write_xlsx(tab_stat,"output/est-activity.xlsx")
+```
+
+
+Gráfico de activity
+```{r}
+tab_stat |> 
+  mutate(
+    biomes_sig = fct_reorder(biomes_sig, Mean)
+  ) |> 
+  ggplot(aes(x=biomes_sig, y=Mean/1e6,fill=biomes_sig)) +
+  geom_col(color="black",position = "dodge") +
+  labs(y = expression(paste("Activity (M t of  ", CO[2],"in living biomass)")),
+                            fill = "Biome") +
+  scale_fill_viridis_d() +
+  theme_bw()
+```
+
+Criando a  tabela da estatística descritiva para capacity e **exportanto a tabela para pasta** `output`
+
+```{r}
+tab_stat <- emission_sources_removals |> 
+  group_by(biomes_sig) |> 
+  summarise(
+    Sum = sum(capacity, na.rm = TRUE),
+    Mean = mean(capacity, na.rm = TRUE),
+    Median = median(capacity, na.rm = TRUE),
+    SD = sd(capacity, na.rm = TRUE),
+    SSE = SD/sqrt(n()),
+    Min = min(capacity, na.rm = TRUE),
+    Max = max(capacity, na.rm = TRUE),
+  )
+writexl::write_xlsx(tab_stat,"output/est-capacity.xlsx")
+```
+
+
+Gráfico de capacity
+```{r}
+tab_stat |> 
+  mutate(
+    biomes_sig = fct_reorder(biomes_sig, Mean)
+  ) |> 
+  ggplot(aes(x=biomes_sig, y=Mean/1e6,fill=biomes_sig)) +
+  geom_col(color="black",position = "dodge") +
+  labs(y = expression(paste("Activity (M t of  ", CO[2]," in living biomass per ha)")),
+                            fill = "Biome") +
+  scale_fill_viridis_d() +
+  theme_bw()
+```
+
+## 🧪 **Estatística Multivariada**
+
+Técnicas como Análise de Componentes Principais (PCA), agrupamentos (clustering) e correlações espaciais.
+
+## 🤖 **Modelagem Estatística e Preditiva**
+
+Aplicação de modelos de regressão, aprendizado de máquina e análise de variáveis importantes para a predição das remoções de CO₂.
