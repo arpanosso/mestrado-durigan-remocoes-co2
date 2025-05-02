@@ -48,6 +48,7 @@ e o ano até $2024$. Nesse caso, vamos transformar os dados de
 ``` r
 library(tidyverse)
 library(geobr)
+library(pracma)
 source("R/graph-theme.R")
 emission_sources_removals <- read_rds("data/emissions_sources.rds") |> 
   select(!starts_with("Other")) |> 
@@ -65,28 +66,58 @@ emission_sources_removals <- read_rds("data/emissions_sources.rds") |>
 ## 🔍 **Análise Exploratória dos Dados**
 
 Visualizações gráficas, estatísticas descritivas e inspeção de padrões
-regionais e temporais.
+regionais e temporais. Inicialmente são carregados os polígonos dos país
+e dos municípios, e a área dos polígomos é calculada pela função
+`areaPolygon` do pacote `{geosphere}` Esse método preserva o sistema
+geográfico WGS84 e considera a curvatura da Terra, ideal para áreas
+irregulares e grandes. O resultado será dado em hectares.
 
 ``` r
 country_br <- read_country(showProgress = FALSE)
-  country_br |> 
+municipality <- read_municipality(showProgress = FALSE) |> 
+  group_by(name_muni) |> 
+  mutate(
+    area_ha = geosphere::areaPolygon(geom |> pluck(1) |> as.matrix()) / 10000
+  ) |> 
+  ungroup()
+```
+
+Agora vamos incorporar a área ao banco de dados.
+
+``` r
+emission_sources_removals_ha <- emission_sources_removals |> 
+  left_join(
+    municipality |> 
+      as.tibble() |> 
+      select(name_muni, area_ha) |> 
+      rename(muni = name_muni),  by = "muni") |> 
+  group_by(year, muni) |> 
+  mutate(
+    emissions_quantity_ha = sum(emissions_quantity)/area_ha
+  )
+```
+
+Imagens dos pontos classificados por bioma
+
+``` r
+country_br |> 
     ggplot() + 
     geom_sf(fill="white", color="black",
           size=.15, show.legend = FALSE) +
-    geom_point( data = emission_sources_removals |> 
+    geom_point( data = emission_sources_removals_ha |> 
        filter(year == 2021),
        aes(lon,lat,colour = biomes_sig))+
     labs(x="Longitude", y="Latitude")+
     graph_theme()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
 Criando a tabela da estatística descritiva para as remoções e
 **exportanto a tabela para pasta** `output`
 
 ``` r
-tab_stat <- emission_sources_removals |> 
+tab_stat <- emission_sources_removals_ha |> 
   group_by(year) |> 
   summarise(
     Sum = sum(emissions_quantity, na.rm = TRUE),
@@ -110,9 +141,40 @@ tab_stat |>
   theme_bw()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- --> Criando a
-tabela da estatística descritiva para activity e **exportanto a tabela
-para pasta** `output`
+![](README_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+
+Criando a tabela da estatística descritiva para as remoções por hectare
+e **exportanto a tabela para pasta** `output`
+
+``` r
+tab_stat <- emission_sources_removals_ha |> 
+  group_by(year) |> 
+  summarise(
+    Sum = sum(emissions_quantity_ha, na.rm = TRUE),
+    Mean = mean(emissions_quantity_ha, na.rm = TRUE),
+    Median = median(emissions_quantity_ha, na.rm = TRUE),
+    SD = sd(emissions_quantity_ha, na.rm = TRUE),
+    SSE = SD/sqrt(n()),
+    Min = min(emissions_quantity_ha, na.rm = TRUE),
+    Max = max(emissions_quantity_ha, na.rm = TRUE),
+  )
+writexl::write_xlsx(tab_stat,"output/est-removals_ha.xlsx")
+```
+
+Gráfico das remoções por ha
+
+``` r
+tab_stat |> 
+  ggplot(aes(x=year, y=Mean)) +
+  geom_col(color="black",fill="salmon") +
+  labs(y = expression(paste("Removal (t ",CO[2],"e per ha)"))) +
+  theme_bw()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+
+Criando a tabela da estatística descritiva para activity e **exportanto
+a tabela para pasta** `output`
 
 ``` r
 tab_stat <- emission_sources_removals |> 
@@ -144,7 +206,7 @@ tab_stat |>
   theme_bw()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
 
 Criando a tabela da estatística descritiva para capacity e **exportanto
 a tabela para pasta** `output`
@@ -179,7 +241,90 @@ tab_stat |>
   theme_bw()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-13-1.png)<!-- --> \###
+Mapeamento - Remoções por ha
+
+``` r
+map(2021:2023,~{
+municipality |> 
+  # filter(abbrev_state == "MG") |> 
+  left_join(
+    emission_sources_removals_ha |> 
+            filter(
+              # state == "MG",
+              year == .x) |> 
+              group_by(muni) |> 
+              summarise(
+                emissions_quantity_ha = mean(emissions_quantity_ha)
+              ) |> 
+      rename(name_muni = muni),
+    by = "name_muni") |> 
+  mutate(emissions_quantity_ha = ifelse(is.na(emissions_quantity_ha),
+                                        median(emissions_quantity_ha,na.rm=TRUE),
+                                        emissions_quantity_ha)) |> 
+  ggplot() +
+  geom_sf(aes(fill=emissions_quantity_ha), color="transparent",
+             size=.05, show.legend = TRUE) +
+  scale_fill_viridis_c() +
+  labs(title = .x) +
+  graph_theme()}
+)
+#> [[1]]
+```
+
+![](README_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+
+    #> 
+    #> [[2]]
+
+![](README_files/figure-gfm/unnamed-chunk-14-2.png)<!-- -->
+
+    #> 
+    #> [[3]]
+
+![](README_files/figure-gfm/unnamed-chunk-14-3.png)<!-- -->
+
+### Mapeamento - Remoções totais
+
+``` r
+map(2021:2023,~{
+municipality |> 
+  # filter(abbrev_state == "MG") |> 
+  left_join(
+    emission_sources_removals_ha |> 
+            filter(
+              # state == "MG",
+              year == .x) |> 
+              group_by(muni) |> 
+              summarise(
+                emissions_quantity = sum(emissions_quantity)
+              ) |> 
+      rename(name_muni = muni),
+    by = "name_muni") |> 
+  mutate(emissions_quantity = ifelse(is.na(emissions_quantity),
+                                        median(emissions_quantity,na.rm=TRUE),
+                                        emissions_quantity)) |> 
+  ggplot() +
+  geom_sf(aes(fill=emissions_quantity), color="transparent",
+             size=.05, show.legend = TRUE) +
+  scale_fill_viridis_c() +
+  labs(title = .x) +
+  graph_theme()}
+)
+#> [[1]]
+```
+
+![](README_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+
+    #> 
+    #> [[2]]
+
+![](README_files/figure-gfm/unnamed-chunk-15-2.png)<!-- -->
+
+    #> 
+    #> [[3]]
+
+![](README_files/figure-gfm/unnamed-chunk-15-3.png)<!-- -->
 
 ## 🧪 **Estatística Multivariada**
 
