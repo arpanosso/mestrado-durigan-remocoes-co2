@@ -79,7 +79,12 @@ municipality <- read_municipality(showProgress = FALSE) |>
   mutate(
     area_ha = geosphere::areaPolygon(geom |> pluck(1) |> as.matrix()) / 10000
   ) |> 
-  ungroup()
+  ungroup() |> 
+  left_join( read_rds("data/df_nome.rds") |> 
+  select(id_municipio, nome_regiao) |> 
+  rename(code_muni = id_municipio) |> 
+    mutate(code_muni = as.numeric(code_muni)),
+  by = "code_muni")
 ```
 
 Agora vamos incorporar a área ao banco de dados.
@@ -93,7 +98,7 @@ emission_sources_removals_ha <- emission_sources_removals |>
       rename(muni = name_muni),  by = "muni") |> 
   group_by(year, muni) |> 
   mutate(
-    emissions_quantity_ha = sum(emissions_quantity)/area_ha
+    emissions_quantity_ha = (emissions_quantity)/area_ha
   )
 ```
 
@@ -143,6 +148,46 @@ tab_stat |>
 
 ![](README_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
+``` r
+map(2021:2023,~{
+municipality |> 
+  # filter(abbrev_state == "MG") |> 
+  left_join(
+    emission_sources_removals_ha |> 
+            filter(
+              # state == "MG",
+              year == .x) |> 
+              group_by(muni) |> 
+              summarise(
+                emissions_quantity = mean(emissions_quantity)
+              ) |> 
+      rename(name_muni = muni),
+    by = "name_muni") |> 
+  mutate(emissions_quantity = ifelse(is.na(emissions_quantity),
+                                        median(emissions_quantity,na.rm=TRUE),
+                                        emissions_quantity)) |> 
+  ggplot() +
+  geom_sf(aes(fill=emissions_quantity), color="transparent",
+             size=.05, show.legend = TRUE) +
+  scale_fill_viridis_c() +
+  labs(title = .x) +
+  graph_theme()}
+)
+#> [[1]]
+```
+
+![](README_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+
+    #> 
+    #> [[2]]
+
+![](README_files/figure-gfm/unnamed-chunk-8-2.png)<!-- -->
+
+    #> 
+    #> [[3]]
+
+![](README_files/figure-gfm/unnamed-chunk-8-3.png)<!-- -->
+
 Criando a tabela da estatística descritiva para as remoções por hectare
 e **exportanto a tabela para pasta** `output`
 
@@ -171,7 +216,138 @@ tab_stat |>
   theme_bw()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+
+``` r
+abbrev_region <- municipality |> select(nome_regiao) |> 
+  drop_na() |> pull(nome_regiao)|>  unique()
+reg_year <- paste0(abbrev_region," ",rep(2021:2024,rep(5,4)))
+
+map(reg_year,~{
+  regi <- str_split(.x[1]," ", simplify = TRUE)[1,1] 
+  ano <- str_split(.x[1]," ", simplify = TRUE)[1,2] 
+municipality |> 
+  filter(nome_regiao == regi) |> 
+  left_join(
+    emission_sources_removals_ha |> 
+            filter(
+              region == regi,
+              year == ano) |> 
+              group_by(muni) |> 
+              summarise(
+                emissions_quantity_ha = mean(emissions_quantity_ha)
+              ) |> 
+      rename(name_muni = muni),
+    by = "name_muni") |> 
+  mutate(emissions_quantity_ha = ifelse(is.na(emissions_quantity_ha),
+                                        median(emissions_quantity_ha,na.rm=TRUE),
+                                        emissions_quantity_ha)) |> 
+  ggplot() +
+  geom_sf(aes(fill=emissions_quantity_ha), color="transparent",
+             size=.05, show.legend = TRUE) +
+  scale_fill_viridis_c() +
+  labs(title = .x) +
+  graph_theme()}
+)
+#> [[1]]
+```
+
+![](README_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+
+    #> 
+    #> [[2]]
+
+![](README_files/figure-gfm/unnamed-chunk-11-2.png)<!-- -->
+
+    #> 
+    #> [[3]]
+
+![](README_files/figure-gfm/unnamed-chunk-11-3.png)<!-- -->
+
+    #> 
+    #> [[4]]
+
+![](README_files/figure-gfm/unnamed-chunk-11-4.png)<!-- -->
+
+    #> 
+    #> [[5]]
+
+![](README_files/figure-gfm/unnamed-chunk-11-5.png)<!-- -->
+
+    #> 
+    #> [[6]]
+
+![](README_files/figure-gfm/unnamed-chunk-11-6.png)<!-- -->
+
+    #> 
+    #> [[7]]
+
+![](README_files/figure-gfm/unnamed-chunk-11-7.png)<!-- -->
+
+    #> 
+    #> [[8]]
+
+![](README_files/figure-gfm/unnamed-chunk-11-8.png)<!-- -->
+
+    #> 
+    #> [[9]]
+
+![](README_files/figure-gfm/unnamed-chunk-11-9.png)<!-- -->
+
+    #> 
+    #> [[10]]
+
+![](README_files/figure-gfm/unnamed-chunk-11-10.png)<!-- -->
+
+    #> 
+    #> [[11]]
+
+![](README_files/figure-gfm/unnamed-chunk-11-11.png)<!-- -->
+
+    #> 
+    #> [[12]]
+
+![](README_files/figure-gfm/unnamed-chunk-11-12.png)<!-- -->
+
+    #> 
+    #> [[13]]
+
+![](README_files/figure-gfm/unnamed-chunk-11-13.png)<!-- -->
+
+    #> 
+    #> [[14]]
+
+![](README_files/figure-gfm/unnamed-chunk-11-14.png)<!-- -->
+
+    #> 
+    #> [[15]]
+
+![](README_files/figure-gfm/unnamed-chunk-11-15.png)<!-- -->
+
+    #> 
+    #> [[16]]
+
+![](README_files/figure-gfm/unnamed-chunk-11-16.png)<!-- -->
+
+    #> 
+    #> [[17]]
+
+![](README_files/figure-gfm/unnamed-chunk-11-17.png)<!-- -->
+
+    #> 
+    #> [[18]]
+
+![](README_files/figure-gfm/unnamed-chunk-11-18.png)<!-- -->
+
+    #> 
+    #> [[19]]
+
+![](README_files/figure-gfm/unnamed-chunk-11-19.png)<!-- -->
+
+    #> 
+    #> [[20]]
+
+![](README_files/figure-gfm/unnamed-chunk-11-20.png)<!-- -->
 
 Criando a tabela da estatística descritiva para activity e **exportanto
 a tabela para pasta** `output`
@@ -206,7 +382,37 @@ tab_stat |>
   theme_bw()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+
+``` r
+map(2021:2021,~{
+municipality |> 
+  # filter(abbrev_state == "MG") |> 
+  left_join(
+    emission_sources_removals_ha |> 
+            filter(
+              # state == "MG",
+              year == .x) |> 
+              group_by(muni) |> 
+              summarise(
+                activity = mean(activity)
+              ) |> 
+      rename(name_muni = muni),
+    by = "name_muni") |> 
+  mutate(activity = ifelse(is.na(activity),
+                                        median(activity,na.rm=TRUE),
+                                        activity)) |> 
+  ggplot() +
+  geom_sf(aes(fill=activity), color="transparent",
+             size=.05, show.legend = TRUE) +
+  scale_fill_viridis_c() +
+  labs(title = .x) +
+  graph_theme()}
+)
+#> [[1]]
+```
+
+![](README_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
 Criando a tabela da estatística descritiva para capacity e **exportanto
 a tabela para pasta** `output`
@@ -241,11 +447,10 @@ tab_stat |>
   theme_bw()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-13-1.png)<!-- --> \###
-Mapeamento - Remoções por ha
+![](README_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
 ``` r
-map(2021:2023,~{
+map(2021:2021,~{
 municipality |> 
   # filter(abbrev_state == "MG") |> 
   left_join(
@@ -255,15 +460,15 @@ municipality |>
               year == .x) |> 
               group_by(muni) |> 
               summarise(
-                emissions_quantity_ha = mean(emissions_quantity_ha)
+                capacity = mean(capacity)
               ) |> 
       rename(name_muni = muni),
     by = "name_muni") |> 
-  mutate(emissions_quantity_ha = ifelse(is.na(emissions_quantity_ha),
-                                        median(emissions_quantity_ha,na.rm=TRUE),
-                                        emissions_quantity_ha)) |> 
+  mutate(capacity = ifelse(is.na(capacity),
+                                        median(capacity,na.rm=TRUE),
+                                        capacity)) |> 
   ggplot() +
-  geom_sf(aes(fill=emissions_quantity_ha), color="transparent",
+  geom_sf(aes(fill=capacity), color="transparent",
              size=.05, show.legend = TRUE) +
   scale_fill_viridis_c() +
   labs(title = .x) +
@@ -272,59 +477,7 @@ municipality |>
 #> [[1]]
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
-
-    #> 
-    #> [[2]]
-
-![](README_files/figure-gfm/unnamed-chunk-14-2.png)<!-- -->
-
-    #> 
-    #> [[3]]
-
-![](README_files/figure-gfm/unnamed-chunk-14-3.png)<!-- -->
-
-### Mapeamento - Remoções totais
-
-``` r
-map(2021:2023,~{
-municipality |> 
-  # filter(abbrev_state == "MG") |> 
-  left_join(
-    emission_sources_removals_ha |> 
-            filter(
-              # state == "MG",
-              year == .x) |> 
-              group_by(muni) |> 
-              summarise(
-                emissions_quantity = sum(emissions_quantity)
-              ) |> 
-      rename(name_muni = muni),
-    by = "name_muni") |> 
-  mutate(emissions_quantity = ifelse(is.na(emissions_quantity),
-                                        median(emissions_quantity,na.rm=TRUE),
-                                        emissions_quantity)) |> 
-  ggplot() +
-  geom_sf(aes(fill=emissions_quantity), color="transparent",
-             size=.05, show.legend = TRUE) +
-  scale_fill_viridis_c() +
-  labs(title = .x) +
-  graph_theme()}
-)
-#> [[1]]
-```
-
-![](README_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
-
-    #> 
-    #> [[2]]
-
-![](README_files/figure-gfm/unnamed-chunk-15-2.png)<!-- -->
-
-    #> 
-    #> [[3]]
-
-![](README_files/figure-gfm/unnamed-chunk-15-3.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
 ## 🧪 **Estatística Multivariada**
 
