@@ -48,6 +48,7 @@ Importante dropar as colunas `Other` e as emissões provenientes de áreas urban
 
 ```{r}
 library(tidyverse)
+library(ggridges)
 library(geobr)
 library(pracma)
 source("R/graph-theme.R")
@@ -61,7 +62,7 @@ emission_sources_removals <- read_rds("data/emissions_sources.rds") |>
   mutate(
     emissions_quantity = -1*emissions_quantity,
     biomes_sig = ifelse(biomes_sig == "Other","AF",biomes_sig)
-  )
+  ) 
 ```
 
 
@@ -116,6 +117,7 @@ Criando a  tabela da estatística descritiva para as remoções e **exportanto a
 
 ```{r}
 tab_stat <- emission_sources_removals_ha |> 
+  mutate(emissions_quantity = emissions_quantity/1e6) |> 
   group_by(year) |> 
   summarise(
     Sum = sum(emissions_quantity, na.rm = TRUE),
@@ -125,10 +127,61 @@ tab_stat <- emission_sources_removals_ha |>
     SSE = SD/sqrt(n()),
     Min = min(emissions_quantity, na.rm = TRUE),
     Max = max(emissions_quantity, na.rm = TRUE),
+    Skw = agricolae::skewness(emissions_quantity),
+    Krt = agricolae::kurtosis(emissions_quantity)
   )
 writexl::write_xlsx(tab_stat,"output/est-removals.xlsx")
 ```
 
+```{r}
+emission_sources_removals_ha  |> 
+  mutate(
+  #   fct_year = fct_rev(as.factor(year)),
+  #   classe = ifelse(tratamento ==
+  #            "UC_desm" | tratamento == "TI_desm",
+  #                   "Des","Con")
+  )  |> 
+  ggplot(aes(y=as_factor(year))) +
+  geom_density_ridges(rel_min_height = 0.03,
+                      aes(x=emissions_quantity/1e6, fill=as_factor(year)),
+                      alpha = .6, color = "black"
+  ) +
+  scale_fill_viridis_d() +
+  theme_ridges() +
+  coord_cartesian(xlim=c(-1e-2,1e-1)) +
+  geom_vline(xintercept = 0, colour="red") +
+  labs(x = expression(paste("Removal ( M t ",CO[2],"e)")),
+       y = "Year") +
+  theme(
+    legend.position = ""
+  )
+```
+
+```{r}
+# boxplot por ano no x e wrap do bioma com escala livre
+emission_sources_removals_ha |> 
+  mutate(
+    #   fct_year = fct_rev(as.factor(year)),
+    #   classe = ifelse(tratamento ==
+    #            "UC_desm" | tratamento == "TI_desm",
+    #                   "Des","Con")
+  )  |> 
+  ggplot(aes(x=as_factor(year))) +
+  geom_boxplot(aes(y=emissions_quantity/1e6, fill=as_factor(year)),
+               alpha = .6, color = "black",outlier.shape = NA
+  ) +
+  scale_fill_viridis_d() +
+  theme_ridges() +
+  # coord_cartesian(ylim=c(-1e-2,1,-1e-2,1,-1e-2,1,-1e-2,1,-1e-2,1,-1e-2,1)) +
+  geom_hline(yintercept = 0, colour="red") +
+  labs(x = expression(paste("Removal ( M t ",CO[2],"e)")),
+       y = "Year") +
+  facet_wrap(~biomes_sig, scale = "free_y")+
+  theme(
+    legend.position = ""
+  )
+
+```
 
 Gráfico das remoções
 
@@ -168,6 +221,7 @@ municipality |>
 ```
 
 
+
 Criando a  tabela da estatística descritiva para as remoções por hectare e **exportanto a tabela para pasta** `output`
 
 ```{r}
@@ -181,6 +235,8 @@ tab_stat <- emission_sources_removals_ha |>
     SSE = SD/sqrt(n()),
     Min = min(emissions_quantity_ha, na.rm = TRUE),
     Max = max(emissions_quantity_ha, na.rm = TRUE),
+    Skw = agricolae::skewness(emissions_quantity_ha),
+    Krt = agricolae::kurtosis(emissions_quantity_ha)
   )
 writexl::write_xlsx(tab_stat,"output/est-removals_ha.xlsx")
 ```
@@ -235,13 +291,15 @@ Criando a  tabela da estatística descritiva para activity e **exportanto a tabe
 tab_stat <- emission_sources_removals |> 
   group_by(biomes_sig) |> 
   summarise(
-    Sum = sum(activity, na.rm = TRUE),
+    # Sum = sum(activity, na.rm = TRUE),
     Mean = mean(activity, na.rm = TRUE),
     Median = median(activity, na.rm = TRUE),
     SD = sd(activity, na.rm = TRUE),
     SSE = SD/sqrt(n()),
     Min = min(activity, na.rm = TRUE),
     Max = max(activity, na.rm = TRUE),
+    Skw = agricolae::skewness(activity),
+    Krt = agricolae::kurtosis(activity)
   )
 writexl::write_xlsx(tab_stat,"output/est-activity.xlsx")
 ```
@@ -293,13 +351,15 @@ Criando a  tabela da estatística descritiva para capacity e **exportanto a tabe
 tab_stat <- emission_sources_removals |> 
   group_by(biomes_sig) |> 
   summarise(
-    Sum = sum(capacity, na.rm = TRUE),
+    # Sum = sum(capacity, na.rm = TRUE),
     Mean = mean(capacity, na.rm = TRUE),
     Median = median(capacity, na.rm = TRUE),
     SD = sd(capacity, na.rm = TRUE),
     SSE = SD/sqrt(n()),
     Min = min(capacity, na.rm = TRUE),
     Max = max(capacity, na.rm = TRUE),
+    Skw = agricolae::skewness(capacity),
+    Krt = agricolae::kurtosis(capacity)
   )
 writexl::write_xlsx(tab_stat,"output/est-capacity.xlsx")
 ```
