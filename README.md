@@ -88,7 +88,7 @@ municipality <- read_municipality(showProgress = FALSE) |>
   by = "code_muni")
 ```
 
-Agora vamos incorporar a área ao banco de dados.
+Agora vamos incorporar a área ao banco de dados, criando um novo objeto.
 
 ``` r
 emission_sources_removals_ha <- emission_sources_removals |> 
@@ -119,8 +119,8 @@ country_br |>
 
 ![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
-Criando a tabela da estatística descritiva para as remoções e
-**exportanto a tabela para pasta** `output`
+Criando a tabela da estatística descritiva para as remoções (M t
+CO<sub>2</sub>e) e **exportanto a tabela para pasta** `output`
 
 ``` r
 tab_stat <- emission_sources_removals_ha |> 
@@ -138,6 +138,14 @@ tab_stat <- emission_sources_removals_ha |>
     Krt = agricolae::kurtosis(emissions_quantity)
   )
 writexl::write_xlsx(tab_stat,"output/est-removals.xlsx")
+tab_stat
+#> # A tibble: 4 × 10
+#>    year   Sum    Mean   Median     SD      SSE    Min   Max   Skw   Krt
+#>   <dbl> <dbl>   <dbl>    <dbl>  <dbl>    <dbl>  <dbl> <dbl> <dbl> <dbl>
+#> 1  2021  286. 0.00384 -0.00193 0.0844 0.000309 -0.674  2.19  8.66  142.
+#> 2  2022 3659. 0.0491   0.00897 0.227  0.000831 -0.743  8.08 18.2   471.
+#> 3  2023 1659. 0.0223   0.00133 0.124  0.000455 -0.453  3.59 13.2   240.
+#> 4  2024 1659. 0.0223   0.00133 0.124  0.000455 -0.453  3.59 13.2   240.
 ```
 
 ``` r
@@ -155,7 +163,7 @@ emission_sources_removals_ha  |>
   ) +
   scale_fill_viridis_d() +
   theme_ridges() +
-  coord_cartesian(xlim=c(-1e-2,1e-1)) +
+  coord_cartesian(xlim=c(-1e-2,1.5e-1)) +
   geom_vline(xintercept = 0, colour="red") +
   labs(x = expression(paste("Removal ( M t ",CO[2],"e)")),
        y = "Year") +
@@ -167,28 +175,24 @@ emission_sources_removals_ha  |>
 ![](README_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
 ``` r
-# boxplot por ano no x e wrap do bioma com escala livre
-emission_sources_removals_ha |> 
+emission_sources_removals_ha  |> 
   mutate(
-    #   fct_year = fct_rev(as.factor(year)),
-    #   classe = ifelse(tratamento ==
-    #            "UC_desm" | tratamento == "TI_desm",
-    #                   "Des","Con")
+  #   fct_year = fct_rev(as.factor(year)),
+  #   classe = ifelse(tratamento ==
+  #            "UC_desm" | tratamento == "TI_desm",
+  #                   "Des","Con")
   )  |> 
-  ggplot(aes(x=as_factor(year))) +
-  geom_boxplot(aes(y=emissions_quantity/1e6, fill=as_factor(year)),
-               alpha = .6, color = "black",outlier.shape = NA
+  ggplot(aes(y=as_factor(year))) +
+  geom_density_ridges(rel_min_height = 0.03,
+                      aes(x=emissions_quantity/1e6, fill=as_factor(biomes_sig)),
+                      alpha = .6, color = "black"
   ) +
   scale_fill_viridis_d() +
   theme_ridges() +
-  # coord_cartesian(ylim=c(-1e-2,1,-1e-2,1,-1e-2,1,-1e-2,1,-1e-2,1,-1e-2,1)) +
-  geom_hline(yintercept = 0, colour="red") +
+  coord_cartesian(xlim=c(-2.5e-1,5.5e-1)) +
+  geom_vline(xintercept = 0, colour="red") +
   labs(x = expression(paste("Removal ( M t ",CO[2],"e)")),
-       y = "Year") +
-  facet_wrap(~biomes_sig, scale = "free_y")+
-  theme(
-    legend.position = ""
-  )
+       y = "Year",fill="Biome") 
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
@@ -206,7 +210,7 @@ tab_stat |>
 ![](README_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 ``` r
-map(2021:2023,~{
+map(2021:2024,~{
 municipality |> 
   # filter(abbrev_state == "MG") |> 
   left_join(
@@ -245,6 +249,94 @@ municipality |>
 
 ![](README_files/figure-gfm/unnamed-chunk-10-3.png)<!-- -->
 
+    #> 
+    #> [[4]]
+
+![](README_files/figure-gfm/unnamed-chunk-10-4.png)<!-- -->
+
+``` r
+emission_sources_removals_ha |> 
+  ggplot(aes(x=as_factor(year),y=emissions_quantity,
+             fill = as_factor(year))) +
+  geom_boxplot()+
+  # geom_violin(trim = FALSE,
+  #             draw_quantiles = c( 0.5),
+  #             color="black") +
+  theme_bw() +
+  ylim(-5e4,1e5) +
+  theme(
+    legend.position = ""
+  ) +
+  scale_fill_viridis_d()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+
+``` r
+biomes <- emission_sources_removals_ha$biomes_sig |> unique()
+map(biomes, ~{
+  emission_sources_removals_ha |> 
+    filter(biomes_sig == .x) |> 
+    ggplot(aes(x=as_factor(year),y=emissions_quantity/1e6,
+               fill = as_factor(year))) +
+    geom_boxplot()+
+    # geom_violin(trim = FALSE,
+    #             draw_quantiles = c( 0.5),
+    #             color="black") +
+    theme_bw() +
+    # ylim(-5e4,1e5) +
+    theme(
+      legend.position = ""
+    ) +
+    scale_fill_viridis_d()+
+    labs(title = .x,
+         y=expression(paste("Removal (M t ",CO[2],"e)")),
+         x="Year")
+})
+#> [[1]]
+```
+
+![](README_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+
+    #> 
+    #> [[2]]
+
+![](README_files/figure-gfm/unnamed-chunk-12-2.png)<!-- -->
+
+    #> 
+    #> [[3]]
+
+![](README_files/figure-gfm/unnamed-chunk-12-3.png)<!-- -->
+
+    #> 
+    #> [[4]]
+
+![](README_files/figure-gfm/unnamed-chunk-12-4.png)<!-- -->
+
+    #> 
+    #> [[5]]
+
+![](README_files/figure-gfm/unnamed-chunk-12-5.png)<!-- -->
+
+    #> 
+    #> [[6]]
+
+![](README_files/figure-gfm/unnamed-chunk-12-6.png)<!-- -->
+
+``` r
+emission_sources_removals_ha |> 
+  mutate(emissions_quantity = emissions_quantity/1e6) |> 
+  group_by(year,biomes_sig) |> 
+  summarise(
+    Sum = sum(emissions_quantity, na.rm = TRUE)) |> 
+    ggplot(aes(x=year,y=Sum,fill = biomes_sig)) +
+    geom_col(position = "dodge",color="black")+
+    theme_bw() +
+  scale_fill_viridis_d()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+
 Criando a tabela da estatística descritiva para as remoções por hectare
 e **exportanto a tabela para pasta** `output`
 
@@ -271,11 +363,11 @@ Gráfico das remoções por ha
 tab_stat |> 
   ggplot(aes(x=year, y=Mean)) +
   geom_col(color="black",fill="salmon") +
-  labs(y = expression(paste("Removal (t ",CO[2],"e per ha)"))) +
+  labs(y = expression(paste("Removal (t ",CO[2],"e per ha )"))) +
   theme_bw()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
 ``` r
 abbrev_region <- municipality |> select(nome_regiao) |> 
@@ -311,102 +403,102 @@ municipality |>
 #> [[1]]
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
     #> 
     #> [[2]]
 
-![](README_files/figure-gfm/unnamed-chunk-13-2.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-16-2.png)<!-- -->
 
     #> 
     #> [[3]]
 
-![](README_files/figure-gfm/unnamed-chunk-13-3.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-16-3.png)<!-- -->
 
     #> 
     #> [[4]]
 
-![](README_files/figure-gfm/unnamed-chunk-13-4.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-16-4.png)<!-- -->
 
     #> 
     #> [[5]]
 
-![](README_files/figure-gfm/unnamed-chunk-13-5.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-16-5.png)<!-- -->
 
     #> 
     #> [[6]]
 
-![](README_files/figure-gfm/unnamed-chunk-13-6.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-16-6.png)<!-- -->
 
     #> 
     #> [[7]]
 
-![](README_files/figure-gfm/unnamed-chunk-13-7.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-16-7.png)<!-- -->
 
     #> 
     #> [[8]]
 
-![](README_files/figure-gfm/unnamed-chunk-13-8.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-16-8.png)<!-- -->
 
     #> 
     #> [[9]]
 
-![](README_files/figure-gfm/unnamed-chunk-13-9.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-16-9.png)<!-- -->
 
     #> 
     #> [[10]]
 
-![](README_files/figure-gfm/unnamed-chunk-13-10.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-16-10.png)<!-- -->
 
     #> 
     #> [[11]]
 
-![](README_files/figure-gfm/unnamed-chunk-13-11.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-16-11.png)<!-- -->
 
     #> 
     #> [[12]]
 
-![](README_files/figure-gfm/unnamed-chunk-13-12.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-16-12.png)<!-- -->
 
     #> 
     #> [[13]]
 
-![](README_files/figure-gfm/unnamed-chunk-13-13.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-16-13.png)<!-- -->
 
     #> 
     #> [[14]]
 
-![](README_files/figure-gfm/unnamed-chunk-13-14.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-16-14.png)<!-- -->
 
     #> 
     #> [[15]]
 
-![](README_files/figure-gfm/unnamed-chunk-13-15.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-16-15.png)<!-- -->
 
     #> 
     #> [[16]]
 
-![](README_files/figure-gfm/unnamed-chunk-13-16.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-16-16.png)<!-- -->
 
     #> 
     #> [[17]]
 
-![](README_files/figure-gfm/unnamed-chunk-13-17.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-16-17.png)<!-- -->
 
     #> 
     #> [[18]]
 
-![](README_files/figure-gfm/unnamed-chunk-13-18.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-16-18.png)<!-- -->
 
     #> 
     #> [[19]]
 
-![](README_files/figure-gfm/unnamed-chunk-13-19.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-16-19.png)<!-- -->
 
     #> 
     #> [[20]]
 
-![](README_files/figure-gfm/unnamed-chunk-13-20.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-16-20.png)<!-- -->
 
 Criando a tabela da estatística descritiva para activity e **exportanto
 a tabela para pasta** `output`
@@ -443,7 +535,7 @@ tab_stat |>
   theme_bw()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
 
 ``` r
 map(2021:2021,~{
@@ -473,7 +565,7 @@ municipality |>
 #> [[1]]
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
 
 Criando a tabela da estatística descritiva para capacity e **exportanto
 a tabela para pasta** `output`
@@ -510,7 +602,7 @@ tab_stat |>
   theme_bw()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
 
 ``` r
 map(2021:2021,~{
@@ -540,7 +632,7 @@ municipality |>
 #> [[1]]
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
 
 ## 🧪 **Estatística Multivariada**
 

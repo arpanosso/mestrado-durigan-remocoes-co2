@@ -65,7 +65,6 @@ emission_sources_removals <- read_rds("data/emissions_sources.rds") |>
   ) 
 ```
 
-
 ## 🔍 **Análise Exploratória dos Dados**
 
 Visualizações gráficas, estatísticas descritivas e inspeção de padrões regionais e temporais. Inicialmente são carregados os polígonos dos país e dos municípios, e a área dos polígomos é calculada pela função `areaPolygon` do pacote `{geosphere}` Esse método preserva o sistema geográfico WGS84 e considera a curvatura da Terra, ideal para áreas irregulares e grandes. O resultado será dado em hectares.
@@ -85,7 +84,8 @@ municipality <- read_municipality(showProgress = FALSE) |>
   by = "code_muni")
 ```
 
-Agora vamos incorporar a área ao banco de dados.
+Agora vamos incorporar a área ao banco de dados, criando um novo objeto.
+
 ```{r}
 emission_sources_removals_ha <- emission_sources_removals |> 
   left_join(
@@ -113,7 +113,9 @@ country_br |>
     graph_theme()
 ```
 
-Criando a  tabela da estatística descritiva para as remoções e **exportanto a tabela para pasta** `output`
+
+
+Criando a tabela da estatística descritiva para as remoções (M t CO~2~e) e **exportanto a tabela para pasta** `output`
 
 ```{r}
 tab_stat <- emission_sources_removals_ha |> 
@@ -131,6 +133,7 @@ tab_stat <- emission_sources_removals_ha |>
     Krt = agricolae::kurtosis(emissions_quantity)
   )
 writexl::write_xlsx(tab_stat,"output/est-removals.xlsx")
+tab_stat
 ```
 
 ```{r}
@@ -148,7 +151,7 @@ emission_sources_removals_ha  |>
   ) +
   scale_fill_viridis_d() +
   theme_ridges() +
-  coord_cartesian(xlim=c(-1e-2,1e-1)) +
+  coord_cartesian(xlim=c(-1e-2,1.5e-1)) +
   geom_vline(xintercept = 0, colour="red") +
   labs(x = expression(paste("Removal ( M t ",CO[2],"e)")),
        y = "Year") +
@@ -158,29 +161,24 @@ emission_sources_removals_ha  |>
 ```
 
 ```{r}
-# boxplot por ano no x e wrap do bioma com escala livre
-emission_sources_removals_ha |> 
+emission_sources_removals_ha  |> 
   mutate(
-    #   fct_year = fct_rev(as.factor(year)),
-    #   classe = ifelse(tratamento ==
-    #            "UC_desm" | tratamento == "TI_desm",
-    #                   "Des","Con")
+  #   fct_year = fct_rev(as.factor(year)),
+  #   classe = ifelse(tratamento ==
+  #            "UC_desm" | tratamento == "TI_desm",
+  #                   "Des","Con")
   )  |> 
-  ggplot(aes(x=as_factor(year))) +
-  geom_boxplot(aes(y=emissions_quantity/1e6, fill=as_factor(year)),
-               alpha = .6, color = "black",outlier.shape = NA
+  ggplot(aes(y=as_factor(year))) +
+  geom_density_ridges(rel_min_height = 0.03,
+                      aes(x=emissions_quantity/1e6, fill=as_factor(biomes_sig)),
+                      alpha = .6, color = "black"
   ) +
   scale_fill_viridis_d() +
   theme_ridges() +
-  # coord_cartesian(ylim=c(-1e-2,1,-1e-2,1,-1e-2,1,-1e-2,1,-1e-2,1,-1e-2,1)) +
-  geom_hline(yintercept = 0, colour="red") +
+  coord_cartesian(xlim=c(-2.5e-1,5.5e-1)) +
+  geom_vline(xintercept = 0, colour="red") +
   labs(x = expression(paste("Removal ( M t ",CO[2],"e)")),
-       y = "Year") +
-  facet_wrap(~biomes_sig, scale = "free_y")+
-  theme(
-    legend.position = ""
-  )
-
+       y = "Year",fill="Biome") 
 ```
 
 Gráfico das remoções
@@ -194,7 +192,7 @@ tab_stat |>
 ```
 
 ```{r}
-map(2021:2023,~{
+map(2021:2024,~{
 municipality |> 
   # filter(abbrev_state == "MG") |> 
   left_join(
@@ -220,9 +218,59 @@ municipality |>
 )
 ```
 
+```{r}
+emission_sources_removals_ha |> 
+  ggplot(aes(x=as_factor(year),y=emissions_quantity,
+             fill = as_factor(year))) +
+  geom_boxplot()+
+  # geom_violin(trim = FALSE,
+  #             draw_quantiles = c( 0.5),
+  #             color="black") +
+  theme_bw() +
+  ylim(-5e4,1e5) +
+  theme(
+    legend.position = ""
+  ) +
+  scale_fill_viridis_d()
+```
+
+```{r}
+biomes <- emission_sources_removals_ha$biomes_sig |> unique()
+map(biomes, ~{
+  emission_sources_removals_ha |> 
+    filter(biomes_sig == .x) |> 
+    ggplot(aes(x=as_factor(year),y=emissions_quantity/1e6,
+               fill = as_factor(year))) +
+    geom_boxplot()+
+    # geom_violin(trim = FALSE,
+    #             draw_quantiles = c( 0.5),
+    #             color="black") +
+    theme_bw() +
+    # ylim(-5e4,1e5) +
+    theme(
+      legend.position = ""
+    ) +
+    scale_fill_viridis_d()+
+    labs(title = .x,
+         y=expression(paste("Removal (M t ",CO[2],"e)")),
+         x="Year")
+})
+```
+
+```{r}
+emission_sources_removals_ha |> 
+  mutate(emissions_quantity = emissions_quantity/1e6) |> 
+  group_by(year,biomes_sig) |> 
+  summarise(
+    Sum = sum(emissions_quantity, na.rm = TRUE)) |> 
+    ggplot(aes(x=year,y=Sum,fill = biomes_sig)) +
+    geom_col(position = "dodge",color="black")+
+    theme_bw() +
+  scale_fill_viridis_d()
+```
 
 
-Criando a  tabela da estatística descritiva para as remoções por hectare e **exportanto a tabela para pasta** `output`
+Criando a tabela da estatística descritiva para as remoções por hectare  e **exportanto a tabela para pasta** `output`
 
 ```{r}
 tab_stat <- emission_sources_removals_ha |> 
@@ -241,14 +289,13 @@ tab_stat <- emission_sources_removals_ha |>
 writexl::write_xlsx(tab_stat,"output/est-removals_ha.xlsx")
 ```
 
-
 Gráfico das remoções por ha
 
 ```{r}
 tab_stat |> 
   ggplot(aes(x=year, y=Mean)) +
   geom_col(color="black",fill="salmon") +
-  labs(y = expression(paste("Removal (t ",CO[2],"e per ha)"))) +
+  labs(y = expression(paste("Removal (t ",CO[2],"e per ha )"))) +
   theme_bw()
 ```
 
@@ -285,7 +332,7 @@ municipality |>
 )
 ```
 
-Criando a  tabela da estatística descritiva para activity e **exportanto a tabela para pasta** `output`
+Criando a tabela da estatística descritiva para activity e **exportanto a tabela para pasta** `output`
 
 ```{r}
 tab_stat <- emission_sources_removals |> 
@@ -305,6 +352,7 @@ writexl::write_xlsx(tab_stat,"output/est-activity.xlsx")
 ```
 
 Gráfico de activity
+
 ```{r}
 tab_stat |> 
   mutate(
@@ -345,7 +393,7 @@ municipality |>
 )
 ```
 
-Criando a  tabela da estatística descritiva para capacity e **exportanto a tabela para pasta** `output`
+Criando a tabela da estatística descritiva para capacity e **exportanto a tabela para pasta** `output`
 
 ```{r}
 tab_stat <- emission_sources_removals |> 
@@ -364,8 +412,8 @@ tab_stat <- emission_sources_removals |>
 writexl::write_xlsx(tab_stat,"output/est-capacity.xlsx")
 ```
 
-
 Gráfico de capacity
+
 ```{r}
 tab_stat |> 
   mutate(
@@ -405,7 +453,6 @@ municipality |>
   graph_theme()}
 )
 ```
-
 
 ## 🧪 **Estatística Multivariada**
 
