@@ -152,7 +152,7 @@ emission_sources_removals_ha  |>
   scale_fill_viridis_d() +
   theme_ridges() +
   coord_cartesian(xlim=c(-1e-2,1.5e-1)) +
-  geom_vline(xintercept = 0, colour="red") +
+  geom_vline(xintercept = 0, colour="black") +
   labs(x = expression(paste("Removal ( M t ",CO[2],"e)")),
        y = "Year") +
   theme(
@@ -266,7 +266,10 @@ emission_sources_removals_ha |>
     ggplot(aes(x=year,y=Sum,fill = biomes_sig)) +
     geom_col(position = "dodge",color="black")+
     theme_bw() +
-  scale_fill_viridis_d()
+  scale_fill_viridis_d() +
+    labs(fill = "Biome",
+         y=expression(paste("Removal (M t ",CO[2],"e)")),
+         x="Year")
 ```
 
 
@@ -298,6 +301,22 @@ tab_stat |>
   labs(y = expression(paste("Removal (t ",CO[2],"e per ha )"))) +
   theme_bw()
 ```
+
+```{r}
+emission_sources_removals_ha |> 
+  # mutate(emissions_quantity = emissions_quantity_ha) |> 
+  group_by(year,biomes_sig) |> 
+  summarise(
+    Mean = mean(emissions_quantity_ha, na.rm = TRUE)) |> 
+    ggplot(aes(x=year,y=Mean,fill = biomes_sig)) +
+    geom_col(position = "dodge",color="black")+
+    theme_bw() +
+  scale_fill_viridis_d() +
+    labs(fill = "Biome",
+         y=expression(paste("Removal ( t ",CO[2],"e ", ha^{-1},")")),
+         x="Year")
+```
+
 
 ```{r}
 abbrev_region <- municipality |> select(nome_regiao) |> 
@@ -367,7 +386,7 @@ tab_stat |>
 ```
 
 ```{r}
-map(2021:2021,~{
+map(2021:2024,~{
 municipality |> 
   # filter(abbrev_state == "MG") |> 
   left_join(
@@ -428,7 +447,7 @@ tab_stat |>
 ```
 
 ```{r}
-map(2021:2021,~{
+map(2021:2024,~{
 municipality |> 
   # filter(abbrev_state == "MG") |> 
   left_join(
@@ -448,7 +467,7 @@ municipality |>
   ggplot() +
   geom_sf(aes(fill=capacity), color="transparent",
              size=.05, show.legend = TRUE) +
-  scale_fill_viridis_c() +
+  scale_fill_viridis_c(option = "magma") +
   labs(title = .x) +
   graph_theme()}
 )
