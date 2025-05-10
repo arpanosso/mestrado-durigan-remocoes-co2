@@ -10,9 +10,11 @@ editor_options:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE,
+                      eval = TRUE,
                       warning = FALSE,
                       message = FALSE,
-                      error = FALSE,  comment = "#>",
+                      error = FALSE,  
+                      comment = "#>",
                       cache = TRUE,
                       fig.width = 10,
                       fig.height = 6) 
@@ -37,16 +39,16 @@ pela internet, realizando o download direto via navegador.
 
 ![](../img/ct_tutorial_03.jpg)
 
-### 4. Encontre o país de interesse
+### 4. Encontre o pais de interesse
 
-Role a lista até encontrar **Brazil** (ou outro país de interesse) e clique no
+Role a lista até encontrar **Brazil** (ou outro pais de interesse) e clique no
 link **CSV** correspondente.\
 Isso iniciará o download de um arquivo compactado no formato `.zip`.
 
 ![](../img/ct_tutorial_04.jpg)
 
 O arquivo baixado conterá os dados de `emissões/remoções` por setor subsetor e
-tipo de gás para o país selecionado.
+tipo de gás para o pais selecionado.
 
 ### 📥 Disponibilização dos Dados
 
@@ -94,7 +96,7 @@ Após o download:
 </div>
 
 A API Climate TRACE oferece acesso a dados globais de emissões de gases de
-efeito estufa. Este guia explora todos os endpoints e recursos até agora disponíveis.
+efeito estufa. Este guia explora todos os endpoints e recursos até agora disponiveis.
 
 ### INFORMAÇÕES DE CONFIGURAÇÃO
 
@@ -102,34 +104,35 @@ Informação e documentação podem ser acessadas em [API-ClimateTRACE](https://
 
 ### Preparando o Ambiente
 
-Todas as funções aqui utilizadas estão documentadas em [`climatetrace_api.R`]()
+Todas as funções aqui utilizadas estão documentadas em [`climatetrace_api.R`](https://github.com/arpanosso/mestrado-durigan-remocoes-co2/blob/master/R/climatetrace_api.R)
 
-```{r source}
+```{r}
 source("../R/climatetrace_api.R")
 ```
 
 
-### Explorando Recursos Disponíveis
+### Explorando Recursos Disponiveis
 
 #### 1. Metadata e Definições
 
 INICIANDO EXTRAÇÃO DE METADADOS... PROCESSANDO DEFINIÇÕES...
 
-### 1.1 Países Disponíveis
+**1.1 Paises Disponiveis**
 
 ```{r countries}
-# Obtendo lista de países
+# Obtendo lista de paises
 paises <- get_countries()
-
-# Tabela com os primeiros 10 países
-knitr::kable(head(paises, 10), caption = "Amostra de Países") |> 
-  kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), font_size = 12)
-
-# Total de países
-cat("Total de países disponíveis:", nrow(paises))
+# 
+# # Tabela com os primeiros 10 paises
+# knitr::kable(head(paises, 10), caption = "Amostra de Paises") |> 
+#   kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), font_size = 12)
+# 
+# # Total de paises
+# cat("Total de paises disponiveis:", nrow(paises))
+DT::datatable(paises)
 ```
 
-### 1.2 Continentes Disponíveis
+**1.2 Continentes Disponiveis**
 
 ```{r continents}
 # Obtendo lista de continentes
@@ -137,11 +140,12 @@ tryCatch({
   continentes <- get_continents()
   
   if (is.list(continentes) || is.vector(continentes)) {
-    cat("Continentes disponíveis:\n")
+    cat("Continentes disponiveis:\n")
     print(continentes)
   } else if (is.data.frame(continentes)) {
-    knitr::kable(continentes, caption = "Continentes") |> 
-      kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))
+    # knitr::kable(continentes, caption = "Continentes") |> 
+    #   kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))
+    DT::datatable(continentes)
   }
 }, error = function(e) {
   cat("Obtendo continentes via documentação:\n")
@@ -151,7 +155,7 @@ tryCatch({
 })
 ```
 
-### 1.3 Setores de Emissão
+**1.3 Setores de Emissão**
 
 ```{r sectors}
 # Obtendo setores
@@ -161,20 +165,21 @@ setores <- get_sectors()
 cat("Estrutura dos dados de setores:\n")
 str(setores, max.level = 1)
 
-# Lidando com diferentes formatos de resposta possíveis
+# Lidando com diferentes formatos de resposta possiveis
 if (is.list(setores)) {
-  # Se for uma lista, extraímos os nomes
+  # Se for uma lista, extraimos os nomes
   setores_list <- names(setores)
   
   # Criando dataframe com setores (limitado a 20 para evitar erros de tamanho)
   setores_df <- data.frame(Setor = head(setores_list, 20))
   
   # Mostrando tabela de setores
-  knitr::kable(setores_df, caption = "Setores Disponíveis na API (top 20)") |> 
-    kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), font_size = 12)
+  # knitr::kable(setores_df, caption = "Setores Disponiveis na API (top 20)") |> 
+  #   kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), font_size = 12)
   
-  cat("\nTotal de setores disponíveis:", length(setores_list))
-  
+  # cat("\nTotal de setores disponiveis:", length(setores_list))
+  # 
+  DT::datatable(setores_df)
   # Se houver mais de 20 setores, mostramos o restante como texto
   if (length(setores_list) > 20) {
     cat("\n\nSetores adicionais:\n")
@@ -190,7 +195,7 @@ if (is.list(setores)) {
 }
 ```
 
-### 1.4 Subsetores de Emissão
+**1.4 Subsetores de Emissão**
 
 ```{r subsectors}
 # Obtendo subsetores
@@ -200,20 +205,20 @@ subsetores <- get_subsectors()
 cat("Estrutura dos dados de subsetores:\n")
 str(subsetores, max.level = 1)
 
-# Lidando com diferentes formatos de resposta possíveis
+# Lidando com diferentes formatos de resposta possiveis
 if (is.list(subsetores)) {
-  # Se for uma lista, extraímos os nomes
+  # Se for uma lista, extraimos os nomes
   subsetores_list <- names(subsetores)
   
   # Criando dataframe com subsetores (limitado a 20 para evitar erros de tamanho)
   subsetores_df <- data.frame(Subsetor = head(subsetores_list, 20))
   
   # Mostrando tabela de subsetores
-  knitr::kable(subsetores_df, caption = "Subsetores Disponíveis na API (top 20)") |> 
-    kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), font_size = 12)
-  
-  cat("\nTotal de subsetores disponíveis:", length(subsetores_list))
-  
+  # knitr::kable(subsetores_df, caption = "Subsetores Disponiveis na API (top 20)") |> 
+  #   kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), font_size = 12)
+  # 
+  # cat("\nTotal de subsetores disponiveis:", length(subsetores_list))
+  DT::datatable(setores_df)
   # Se houver mais de 20 subsetores, mostramos o restante como texto
   if (length(subsetores_list) > 20) {
     cat("\n\nSubsetores adicionais (mostrando até 40):\n")
@@ -229,7 +234,7 @@ if (is.list(subsetores)) {
 }
 ```
 
-### 1.5 Tipos de Gases
+**1.5 Gases disponiveis**
 
 ```{r gases}
 # Obtendo tipos de gases
@@ -237,11 +242,12 @@ tryCatch({
   gases <- get_gases()
   
   if (is.list(gases) || is.vector(gases)) {
-    cat("Gases disponíveis:\n")
+    cat("Gases disponiveis:\n")
     print(gases)
   } else if (is.data.frame(gases)) {
-    knitr::kable(gases, caption = "Gases") |> 
-      kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))
+    # knitr::kable(gases, caption = "Gases") |> 
+    #   kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))
+    DT::datatable(gases)
   }
 }, error = function(e) {
   cat("Obtendo gases via documentação:\n")
@@ -250,44 +256,37 @@ tryCatch({
 })
 ```
 
-### 1.6 Grupos de Países
+**1.6 Grupos de Paises**
 
 ```{r groups}
-# Obtendo grupos de países
+# Obtendo grupos de paises
 tryCatch({
   grupos <- get_groups()
   
   if (is.list(grupos) || is.vector(grupos)) {
-    cat("Grupos disponíveis:\n")
+    cat("Grupos disponiveis:\n")
     print(head(grupos, 10))
     cat("Total de grupos:", length(grupos))
   } else if (is.data.frame(grupos)) {
-    knitr::kable(head(grupos, 10), caption = "Amostra de Grupos") |> 
-      kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))
-    cat("Total de grupos:", nrow(grupos))
+    # knitr::kable(head(grupos, 10), caption = "Amostra de Grupos") |> 
+    #   kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))
+    # cat("Total de grupos:", nrow(grupos))
+    DT::datatable(grupos)
   }
 }, error = function(e) {
-  cat("Não foi possível obter informações sobre grupos.\n")
-  cat("Use o endpoint /v6/definitions/groups para explorar os grupos disponíveis.")
+  cat("Não foi possivel obter informações sobre grupos.\n")
+  cat("Use o endpoint /v6/definitions/groups para explorar os grupos disponiveis.")
 })
 ```
 
-::: section-header
-┌─────────────────────────────────────────────────────────────────────┐ │ FONTES
-DE EMISSÃO │
-└─────────────────────────────────────────────────────────────────────┘
-:::
 
-## 2. Fontes de Emissão (Assets)
+#### 2. Fontes de Emissão (Assets)
 
-::: {.ascii-art style="font-size: 12px;"}
-INICIANDO ANÁLISE DE FONTES DE EMISSÃO... COLETANDO DADOS...
-:::
 
-A API Climate TRACE permite obter dados detalhados sobre fontes específicas de
+A API Climate TRACE permite obter dados detalhados sobre fontes especificas de
 emissão:
 
-### 2.1 Buscar Fontes de Emissão (Assets)
+**2.1 Buscar Fontes de Emissão (Assets)**
 
 ```{r assets_search}
 # Buscando fontes de emissão no Brasil para o setor de uso de terra
@@ -302,7 +301,7 @@ fontes_brasil <- search_assets(
 cat("Estrutura da resposta para assets:\n")
 str(fontes_brasil, max.level = 1)
 
-# Extraindo informações básicas das fontes (se disponíveis)
+# Extraindo informações básicas das fontes (se disponiveis)
 if (!is.null(fontes_brasil) && "features" %in% names(fontes_brasil)) {
   cat("\nExemplo de fontes encontradas:\n")
   
@@ -327,7 +326,7 @@ if (!is.null(fontes_brasil) && "features" %in% names(fontes_brasil)) {
 }
 ```
 
-### 2.3 Emissões por Fonte
+**2.3 Emissões por Fonte**
 
 ```{r asset_emissions}
 # Obtendo emissões agregadas por fonte
@@ -351,22 +350,14 @@ if (is.data.frame(emissoes_fontes) && nrow(emissoes_fontes) > 0) {
 }
 ```
 
-::: section-header
-┌─────────────────────────────────────────────────────────────────────┐ │
-ANÁLISE POR PAÍSES │
-└─────────────────────────────────────────────────────────────────────┘
-:::
 
-## 3. Emissões por País
+#### 3. Emissões por Pais
 
-::: {.ascii-art style="font-size: 12px;"}
-INICIANDO ANÁLISE POR PAÍSES... COMPARANDO DADOS ENTRE REGIÕES...
-:::
 
-### 3.1 Emissões Agregadas por País
+**3.1 Emissões Agregadas por Pais**
 
 ```{r country_emissions}
-# Obtendo emissões agregadas para um grupo de países
+# Obtendo emissões agregadas para um grupo de paises
 paises_amostra <- c("BRA", "USA", "CHN", "IND", "RUS")
 emissoes_paises <- get_country_emissions(
   countries = paises_amostra,
@@ -376,19 +367,19 @@ emissoes_paises <- get_country_emissions(
 )
 
 # Estrutura da resposta
-cat("Estrutura da resposta para emissões por país:\n")
+cat("Estrutura da resposta para emissões por pais:\n")
 str(emissoes_paises, max.level = 1)
 
 # Criando tabela com dados principais
 if (is.data.frame(emissoes_paises) && nrow(emissoes_paises) > 0) {
   # Extraindo dados principais
   emissoes_resumo <- data.frame(
-    País = emissoes_paises$country,
+    Pais = emissoes_paises$country,
     Continente = emissoes_paises$continent,
     Rank = emissoes_paises$rank
   )
   
-  # Adicionando emissões de CO2 (se disponível)
+  # Adicionando emissões de CO2 (se disponivel)
   if ("emissions" %in% names(emissoes_paises)) {
     if (is.data.frame(emissoes_paises$emissions) && "co2" %in% names(emissoes_paises$emissions)) {
       emissoes_resumo$CO2_Mt <- emissoes_paises$emissions$co2 / 1e6  # Convertendo para Mt
@@ -399,38 +390,35 @@ if (is.data.frame(emissoes_paises) && nrow(emissoes_paises) > 0) {
     }
   }
   
-  # Adicionando nomes dos países
+  # Adicionando nomes dos paises
   paises_info <- get_countries()
-  emissoes_resumo$Nome_País <- paises_info$name[match(emissoes_resumo$País, paises_info$alpha3)]
+  emissoes_resumo$Nome_Pais <- paises_info$name[match(emissoes_resumo$Pais, paises_info$alpha3)]
   
   # Reordenando colunas
-  if ("Nome_País" %in% names(emissoes_resumo)) {
+  if ("Nome_Pais" %in% names(emissoes_resumo)) {
     emissoes_resumo <- emissoes_resumo |> 
-      select(Nome_País, País, Continente, everything())
+      select(Nome_Pais, Pais, Continente, everything())
   }
   
   # Mostrando tabela
-  knitr::kable(emissoes_resumo, caption = "Emissões por País (2020-2022)") |> 
-    kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), font_size = 12)
+  # knitr::kable(emissoes_resumo, caption = "Emissões por Pais (2020-2022)") |> 
+  #   kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), font_size = 12)
+  DT::datatable(emissoes_resumo)
 }
 ```
 
-::: section-header
-┌─────────────────────────────────────────────────────────────────────┐ │
-EXEMPLOS PRÁTICOS DE USO │
-└─────────────────────────────────────────────────────────────────────┘
-:::
 
-# Exemplos Práticos de Uso da API
+
+## 📥 Exemplos Práticos de Uso da API
 
 ::: {.ascii-art style="font-size: 12px;"}
 GERANDO EXEMPLOS DE CÓDIGO PARA CASOS DE USO COMUNS...
 :::
 
-## Exemplo 1: Emissões de Desmatamento por País
+### Exemplo 1: Emissões de Desmatamento por Pais
 
 ```{r desmatamento}
-# Buscando emissões do subsetor de desmatamento para os principais países
+# Buscando emissões do subsetor de desmatamento para os principais paises
 paises_tropicais <- c("BRA", "IDN", "COD", "MYS", "PER")
 desmatamento <- get_country_emissions(
   countries = paises_tropicais,
@@ -444,28 +432,29 @@ desmatamento <- get_country_emissions(
 if (is.data.frame(desmatamento) && nrow(desmatamento) > 0) {
   # Extraindo dados principais
   desmat_resumo <- data.frame(
-    País = desmatamento$country,
+    Pais = desmatamento$country,
     CO2_Mt = ifelse("emissions" %in% names(desmatamento) && 
                     "co2" %in% names(desmatamento$emissions),
                    desmatamento$emissions$co2 / 1e6, NA)
   )
   
-  # Adicionando nomes dos países
+  # Adicionando nomes dos paises
   paises_info <- get_countries()
-  desmat_resumo$Nome_País <- paises_info$name[match(desmat_resumo$País, paises_info$alpha3)]
+  desmat_resumo$Nome_Pais <- paises_info$name[match(desmat_resumo$Pais, paises_info$alpha3)]
   
   # Reordenando e ordenando por emissão
   desmat_resumo <- desmat_resumo |> 
-    select(Nome_País, País, CO2_Mt) |> 
+    select(Nome_Pais, Pais, CO2_Mt) |> 
     arrange(desc(CO2_Mt))
   
   # Mostrando tabela
-  knitr::kable(desmat_resumo, caption = "Emissões por Desmatamento (2020-2022)") |> 
-    kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), font_size = 12)
+  # knitr::kable(desmat_resumo, caption = "Emissões por Desmatamento (2020-2022)") |> 
+  #   kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), font_size = 12)
+  DT::datatable(desmat_resumo)
 }
 ```
 
-## Exemplo 2: Remoções de Carbono Florestal
+### Exemplo 2: Remoções de Carbono Florestal
 
 ```{r remocoes}
 # Buscando dados de remoções de carbono
@@ -479,49 +468,49 @@ remocoes <- get_country_emissions(
 
 # Criando tabela com os resultados
 if (is.data.frame(remocoes) && nrow(remocoes) > 0) {
-  # Extraindo dados principais
+  if("emissions" %in% names(remocoes) && 
+                           "co2" %in% names(remocoes$emissions)){
+                      vetor_remocao_CO2_Mt <- -remocoes$emissions$co2 / 1e6
+                      }else{
+                             NA
+                        }
+  
   remoc_resumo <- data.frame(
-    País = remocoes$country,
-    Remoção_CO2_Mt = ifelse("emissions" %in% names(remocoes) && 
-                           "co2" %in% names(remocoes$emissions),
-                         -remocoes$emissions$co2 / 1e6, NA)  # Negativo indica remoção
+    Pais = remocoes$country,
+    Remocao_CO2_Mt = vetor_remocao_CO2_Mt
   )
   
-  # Adicionando nomes dos países
+  # Adicionando nomes dos paises
   paises_info <- get_countries()
-  remoc_resumo$Nome_País <- paises_info$name[match(remoc_resumo$País, paises_info$alpha3)]
+  remoc_resumo$Nome_Pais <- paises_info$name[match(remoc_resumo$Pais, paises_info$alpha3)]
   
   # Reordenando e ordenando por remoção
   remoc_resumo <- remoc_resumo |> 
-    select(Nome_País, País, Remoção_CO2_Mt) |> 
-    arrange(desc(Remoção_CO2_Mt))
+    select(Nome_Pais, Pais, Remocao_CO2_Mt) |> 
+    arrange(desc(Remocao_CO2_Mt))
   
   # Mostrando tabela
-  knitr::kable(remoc_resumo, caption = "Remoções de Carbono (2020-2022)") |> 
-    kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), font_size = 12)
+  # knitr::kable(remoc_resumo, caption = "Remoções de Carbono (2020-2022)") |> 
+  #   kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), font_size = 12)
+  DT::datatable(remoc_resumo)
 }
 ```
 
-::: section-header
-┌─────────────────────────────────────────────────────────────────────┐ │
-DOCUMENTAÇÃO DE REFERÊNCIA │
-└─────────────────────────────────────────────────────────────────────┘
-:::
 
-# Parâmetros Disponíveis por Endpoint
+### Parâmetros Disponiveis por Endpoint
 
 ::: {.ascii-art style="font-size: 12px;"}
 DOCUMENTANDO PARÂMETROS DE API... CRIANDO REFERÊNCIA TÉCNICA...
 :::
 
-## 1. Endpoint: /v6/assets (Fontes de Emissão)
+**1. Endpoint: /v6/assets (Fontes de Emissão)**
 
 ```{r assets_params, echo=FALSE}
 # Criando tabela de parâmetros para o endpoint assets
 assets_params <- data.frame(
   Parâmetro = c("countries", "sectors", "subsectors", "year", "limit", "offset", "continents", "adminId"),
   Tipo = c("array[string]", "array[string]", "string", "integer", "integer", "integer", "array[string]", "integer"),
-  Descrição = c("Lista de códigos de países (3 letras)", 
+  Descrição = c("Lista de códigos de paises (3 letras)", 
                "Lista de setores",
                "Lista de subsetores",
                "Ano (2020-2050)",
@@ -535,7 +524,7 @@ knitr::kable(assets_params, caption = "Parâmetros para /v6/assets") |>
   kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), font_size = 12)
 ```
 
-## 2. Endpoint: /v6/assets/emissions (Emissões por Fonte)
+**2. Endpoint: /v6/assets/emissions (Emissões por Fonte)**
 
 ```{r assets_emissions_params, echo=FALSE}
 # Criando tabela de parâmetros para o endpoint de emissões por fonte
@@ -548,7 +537,7 @@ emissions_params <- data.frame(
                "Lista de setores",
                "Lista de continentes",
                "Lista de grupos",
-               "Lista de códigos de países",
+               "Lista de códigos de paises",
                "Tipo de gás (n2o, co2e, co2, ch4, co2e_20yr, co2e_100yr)")
 )
 
@@ -556,10 +545,10 @@ knitr::kable(emissions_params, caption = "Parâmetros para /v6/assets/emissions"
   kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), font_size = 12)
 ```
 
-## 3. Endpoint: /v6/country/emissions (Emissões por País)
+**3. Endpoint: /v6/country/emissions (Emissões por Pais)**
 
 ```{r country_emissions_params, echo=FALSE}
-# Criando tabela de parâmetros para o endpoint de emissões por país
+# Criando tabela de parâmetros para o endpoint de emissões por pais
 country_params <- data.frame(
   Parâmetro = c("since", "to", "sector", "subsectors", "continents", "groups", "countries"),
   Tipo = c("integer", "integer", "array[string]", "string", "array[string]", "array[string]", "array[string]"),
@@ -569,7 +558,7 @@ country_params <- data.frame(
                "Lista de subsetores",
                "Lista de continentes",
                "Lista de grupos",
-               "Lista de códigos de países")
+               "Lista de códigos de paises")
 )
 
 knitr::kable(country_params, caption = "Parâmetros para /v6/country/emissions") |> 
