@@ -164,7 +164,7 @@ emission_sources_removals_ha  |>
   scale_fill_viridis_d() +
   theme_ridges() +
   coord_cartesian(xlim=c(-1e-2,1.5e-1)) +
-  geom_vline(xintercept = 0, colour="red") +
+  geom_vline(xintercept = 0, colour="black") +
   labs(x = expression(paste("Removal ( M t ",CO[2],"e)")),
        y = "Year") +
   theme(
@@ -332,7 +332,10 @@ emission_sources_removals_ha |>
     ggplot(aes(x=year,y=Sum,fill = biomes_sig)) +
     geom_col(position = "dodge",color="black")+
     theme_bw() +
-  scale_fill_viridis_d()
+  scale_fill_viridis_d() +
+    labs(fill = "Biome",
+         y=expression(paste("Removal (M t ",CO[2],"e)")),
+         x="Year")
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
@@ -378,6 +381,23 @@ tab_stat |>
 ![](README_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
 ``` r
+emission_sources_removals_ha |> 
+  # mutate(emissions_quantity = emissions_quantity_ha) |> 
+  group_by(year,biomes_sig) |> 
+  summarise(
+    Mean = mean(emissions_quantity_ha, na.rm = TRUE)) |> 
+    ggplot(aes(x=year,y=Mean,fill = biomes_sig)) +
+    geom_col(position = "dodge",color="black")+
+    theme_bw() +
+  scale_fill_viridis_d() +
+    labs(fill = "Biome",
+         y=expression(paste("Removal ( t ",CO[2],"e ", ha^{-1},")")),
+         x="Year")
+```
+
+![](README_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+
+``` r
 abbrev_region <- municipality |> select(nome_regiao) |> 
   drop_na() |> pull(nome_regiao)|>  unique()
 reg_year <- paste0(abbrev_region," ",rep(2021:2024,rep(5,4)))
@@ -411,102 +431,102 @@ municipality |>
 #> [[1]]
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
     #> 
     #> [[2]]
 
-![](README_files/figure-gfm/unnamed-chunk-16-2.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-17-2.png)<!-- -->
 
     #> 
     #> [[3]]
 
-![](README_files/figure-gfm/unnamed-chunk-16-3.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-17-3.png)<!-- -->
 
     #> 
     #> [[4]]
 
-![](README_files/figure-gfm/unnamed-chunk-16-4.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-17-4.png)<!-- -->
 
     #> 
     #> [[5]]
 
-![](README_files/figure-gfm/unnamed-chunk-16-5.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-17-5.png)<!-- -->
 
     #> 
     #> [[6]]
 
-![](README_files/figure-gfm/unnamed-chunk-16-6.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-17-6.png)<!-- -->
 
     #> 
     #> [[7]]
 
-![](README_files/figure-gfm/unnamed-chunk-16-7.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-17-7.png)<!-- -->
 
     #> 
     #> [[8]]
 
-![](README_files/figure-gfm/unnamed-chunk-16-8.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-17-8.png)<!-- -->
 
     #> 
     #> [[9]]
 
-![](README_files/figure-gfm/unnamed-chunk-16-9.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-17-9.png)<!-- -->
 
     #> 
     #> [[10]]
 
-![](README_files/figure-gfm/unnamed-chunk-16-10.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-17-10.png)<!-- -->
 
     #> 
     #> [[11]]
 
-![](README_files/figure-gfm/unnamed-chunk-16-11.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-17-11.png)<!-- -->
 
     #> 
     #> [[12]]
 
-![](README_files/figure-gfm/unnamed-chunk-16-12.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-17-12.png)<!-- -->
 
     #> 
     #> [[13]]
 
-![](README_files/figure-gfm/unnamed-chunk-16-13.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-17-13.png)<!-- -->
 
     #> 
     #> [[14]]
 
-![](README_files/figure-gfm/unnamed-chunk-16-14.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-17-14.png)<!-- -->
 
     #> 
     #> [[15]]
 
-![](README_files/figure-gfm/unnamed-chunk-16-15.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-17-15.png)<!-- -->
 
     #> 
     #> [[16]]
 
-![](README_files/figure-gfm/unnamed-chunk-16-16.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-17-16.png)<!-- -->
 
     #> 
     #> [[17]]
 
-![](README_files/figure-gfm/unnamed-chunk-16-17.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-17-17.png)<!-- -->
 
     #> 
     #> [[18]]
 
-![](README_files/figure-gfm/unnamed-chunk-16-18.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-17-18.png)<!-- -->
 
     #> 
     #> [[19]]
 
-![](README_files/figure-gfm/unnamed-chunk-16-19.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-17-19.png)<!-- -->
 
     #> 
     #> [[20]]
 
-![](README_files/figure-gfm/unnamed-chunk-16-20.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-17-20.png)<!-- -->
 
 ``` r
 emission_sources_removals_ha  |> 
@@ -719,10 +739,14 @@ tab_stat |>
   theme_bw()
 ```
 
+<<<<<<< HEAD
 ![](README_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
+=======
+![](README_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+>>>>>>> 10cbdd0ae903c157ed4bb20db1116cfe2d6645bf
 
 ``` r
-map(2021:2021,~{
+map(2021:2024,~{
 municipality |> 
   # filter(abbrev_state == "MG") |> 
   left_join(
@@ -749,7 +773,26 @@ municipality |>
 #> [[1]]
 ```
 
+<<<<<<< HEAD
 ![](README_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
+=======
+![](README_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+
+    #> 
+    #> [[2]]
+
+![](README_files/figure-gfm/unnamed-chunk-20-2.png)<!-- -->
+
+    #> 
+    #> [[3]]
+
+![](README_files/figure-gfm/unnamed-chunk-20-3.png)<!-- -->
+
+    #> 
+    #> [[4]]
+
+![](README_files/figure-gfm/unnamed-chunk-20-4.png)<!-- -->
+>>>>>>> 10cbdd0ae903c157ed4bb20db1116cfe2d6645bf
 
 Criando a tabela da estatística descritiva para capacity e **exportanto
 a tabela para pasta** `output`
@@ -786,10 +829,14 @@ tab_stat |>
   theme_bw()
 ```
 
+<<<<<<< HEAD
 ![](README_files/figure-gfm/unnamed-chunk-27-1.png)<!-- -->
+=======
+![](README_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
+>>>>>>> 10cbdd0ae903c157ed4bb20db1116cfe2d6645bf
 
 ``` r
-map(2021:2021,~{
+map(2021:2024,~{
 municipality |> 
   # filter(abbrev_state == "MG") |> 
   left_join(
@@ -809,14 +856,33 @@ municipality |>
   ggplot() +
   geom_sf(aes(fill=capacity), color="transparent",
              size=.05, show.legend = TRUE) +
-  scale_fill_viridis_c() +
+  scale_fill_viridis_c(option = "magma") +
   labs(title = .x) +
   graph_theme()}
 )
 #> [[1]]
 ```
 
+<<<<<<< HEAD
 ![](README_files/figure-gfm/unnamed-chunk-28-1.png)<!-- -->
+=======
+![](README_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
+
+    #> 
+    #> [[2]]
+
+![](README_files/figure-gfm/unnamed-chunk-23-2.png)<!-- -->
+
+    #> 
+    #> [[3]]
+
+![](README_files/figure-gfm/unnamed-chunk-23-3.png)<!-- -->
+
+    #> 
+    #> [[4]]
+
+![](README_files/figure-gfm/unnamed-chunk-23-4.png)<!-- -->
+>>>>>>> 10cbdd0ae903c157ed4bb20db1116cfe2d6645bf
 
 ## 🧪 **Estatística Multivariada**
 
