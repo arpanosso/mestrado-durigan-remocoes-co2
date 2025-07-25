@@ -338,6 +338,14 @@ tab_stat <- emission_sources_removals_ha |>
     Krt = agricolae::kurtosis(emissions_quantity_ha)
   )
 writexl::write_xlsx(tab_stat,"output/est-removals_ha.xlsx")
+tab_stat
+#> # A tibble: 4 × 10
+#>    year    Sum    Mean  Median    SD     SSE    Min   Max   Skw   Krt
+#>   <dbl>  <dbl>   <dbl>   <dbl> <dbl>   <dbl>  <dbl> <dbl> <dbl> <dbl>
+#> 1  2021 -8777. -0.121  -0.0581 0.559 0.00205 -17.4   5.28 -11.1  333.
+#> 2  2022 26604.  0.368   0.233  0.784 0.00287  -1.34 20.5   13.7  290.
+#> 3  2023  6113.  0.0845  0.0450 0.339 0.00124  -2.34  8.29  13.2  284.
+#> 4  2024  6113.  0.0845  0.0450 0.339 0.00124  -2.34  8.29  13.2  284.
 ```
 
 Gráfico das remoções por ha
@@ -475,6 +483,182 @@ municipality |>
 
 ![](README_files/figure-gfm/unnamed-chunk-16-15.png)<!-- -->
 
+``` r
+emission_sources_removals_ha  |> 
+  mutate(
+  #   fct_year = fct_rev(as.factor(year)),
+  #   classe = ifelse(tratamento ==
+  #            "UC_desm" | tratamento == "TI_desm",
+  #                   "Des","Con")
+  )  |> 
+  ggplot(aes(y=as_factor(year))) +
+  geom_density_ridges(rel_min_height = 0.03,
+                      aes(x=emissions_quantity_ha/1e6, fill=as_factor(year)),
+                      alpha = .6, color = "black"
+  ) +
+  scale_fill_viridis_d() +
+  theme_ridges() +
+  coord_cartesian(xlim=c(-1e-6,1e-6)) +
+  geom_vline(xintercept = 0, colour="red") +
+  labs(x = expression(paste("Removal ( M t ",CO[2],"e per ha)")),
+       y = "Year") +
+  theme(
+    legend.position = ""
+  )
+```
+
+![](README_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+
+``` r
+emission_sources_removals_ha  |> 
+  mutate(
+  #   fct_year = fct_rev(as.factor(year)),
+  #   classe = ifelse(tratamento ==
+  #            "UC_desm" | tratamento == "TI_desm",
+  #                   "Des","Con")
+  )  |> 
+  ggplot(aes(y=as_factor(year))) +
+  geom_density_ridges(rel_min_height = 0.03,
+                      aes(x=emissions_quantity_ha, fill=as_factor(biomes_sig)),
+                      alpha = .6, color = "black"
+  ) +
+  scale_fill_viridis_d() +
+  theme_ridges() +
+  coord_cartesian(xlim=c(-1,2)) +
+  geom_vline(xintercept = 0, colour="red") +
+  labs(x = expression(paste("Removal ( M t ",CO[2],"e per ha)")),
+       y = "Year",fill="Biome") 
+```
+
+![](README_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+
+``` r
+map(2021:2024,~{
+municipality |> 
+  # filter(abbrev_state == "MG") |> 
+  left_join(
+    emission_sources_removals_ha |> 
+            filter(
+              # state == "MG",
+              year == .x) |> 
+              group_by(muni) |> 
+              summarise(
+                emissions_quantity_ha = mean(emissions_quantity_ha)
+              ) |> 
+      rename(name_muni = muni),
+    by = "name_muni") |> 
+  mutate(emissions_quantity_ha = ifelse(is.na(emissions_quantity_ha),
+                                        median(emissions_quantity_ha,na.rm=TRUE),
+                                        emissions_quantity_ha)) |> 
+  ggplot() +
+  geom_sf(aes(fill=emissions_quantity_ha), color="transparent",
+             size=.05, show.legend = TRUE) +
+  scale_fill_viridis_c() +
+  labs(title = .x) +
+  graph_theme()}
+)
+#> [[1]]
+```
+
+![](README_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+
+    #> 
+    #> [[2]]
+
+![](README_files/figure-gfm/unnamed-chunk-19-2.png)<!-- -->
+
+    #> 
+    #> [[3]]
+
+![](README_files/figure-gfm/unnamed-chunk-19-3.png)<!-- -->
+
+    #> 
+    #> [[4]]
+
+![](README_files/figure-gfm/unnamed-chunk-19-4.png)<!-- -->
+
+``` r
+emission_sources_removals_ha |> 
+  ggplot(aes(x=as_factor(year),y=emissions_quantity_ha,
+             fill = as_factor(year))) +
+  geom_boxplot()+
+  # geom_violin(trim = FALSE,
+  #             draw_quantiles = c( 0.5),
+  #             color="black") +
+  theme_bw() +
+  ylim(-3,3) +
+  theme(
+    legend.position = ""
+  ) +
+  scale_fill_viridis_d()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+
+``` r
+biomes <- emission_sources_removals_ha$biomes_sig |> unique()
+map(biomes, ~{
+  emission_sources_removals_ha |> 
+    filter(biomes_sig == .x) |> 
+    ggplot(aes(x=as_factor(year),y=emissions_quantity_ha,
+               fill = as_factor(year))) +
+    geom_boxplot()+
+    # geom_violin(trim = FALSE,
+    #             draw_quantiles = c( 0.5),
+    #             color="black") +
+    theme_bw() +
+    # ylim(-5e4,1e5) +
+    theme(
+      legend.position = ""
+    ) +
+    scale_fill_viridis_d()+
+    labs(title = .x,
+         y=expression(paste("Removal (M t ",CO[2],"e per ha)")),
+         x="Year")
+})
+#> [[1]]
+```
+
+![](README_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+
+    #> 
+    #> [[2]]
+
+![](README_files/figure-gfm/unnamed-chunk-21-2.png)<!-- -->
+
+    #> 
+    #> [[3]]
+
+![](README_files/figure-gfm/unnamed-chunk-21-3.png)<!-- -->
+
+    #> 
+    #> [[4]]
+
+![](README_files/figure-gfm/unnamed-chunk-21-4.png)<!-- -->
+
+    #> 
+    #> [[5]]
+
+![](README_files/figure-gfm/unnamed-chunk-21-5.png)<!-- -->
+
+    #> 
+    #> [[6]]
+
+![](README_files/figure-gfm/unnamed-chunk-21-6.png)<!-- -->
+
+``` r
+emission_sources_removals_ha |> 
+  group_by(year,biomes_sig) |> 
+  summarise(
+    Mean = mean(emissions_quantity_ha, na.rm = TRUE)) |> 
+    ggplot(aes(x=year,y=Mean,fill = biomes_sig)) +
+    geom_col(position = "dodge",color="black")+
+    theme_bw() +
+  scale_fill_viridis_d()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
+
 Criando a tabela da estatística descritiva para activity e **exportanto
 a tabela para pasta** `output`
 
@@ -510,6 +694,15 @@ Gráfico de activity
 #   theme_bw()
 ```
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+![](README_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
+=======
+![](README_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+>>>>>>> 10cbdd0ae903c157ed4bb20db1116cfe2d6645bf
+
+>>>>>>> d0f0dbab751688c6028bb3f5890c7d3df6a2a6ce
 ``` r
 # map(2021:2023,~{
 # municipality |> 
@@ -537,6 +730,30 @@ Gráfico de activity
 # )
 ```
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+![](README_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
+=======
+![](README_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+
+    #> 
+    #> [[2]]
+
+![](README_files/figure-gfm/unnamed-chunk-20-2.png)<!-- -->
+
+    #> 
+    #> [[3]]
+
+![](README_files/figure-gfm/unnamed-chunk-20-3.png)<!-- -->
+
+    #> 
+    #> [[4]]
+
+![](README_files/figure-gfm/unnamed-chunk-20-4.png)<!-- -->
+>>>>>>> 10cbdd0ae903c157ed4bb20db1116cfe2d6645bf
+
+>>>>>>> d0f0dbab751688c6028bb3f5890c7d3df6a2a6ce
 Criando a tabela da estatística descritiva para capacity e **exportanto
 a tabela para pasta** `output`
 
@@ -572,6 +789,15 @@ Gráfico de capacity
 #   theme_bw()
 ```
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+![](README_files/figure-gfm/unnamed-chunk-27-1.png)<!-- -->
+=======
+![](README_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
+>>>>>>> 10cbdd0ae903c157ed4bb20db1116cfe2d6645bf
+
+>>>>>>> d0f0dbab751688c6028bb3f5890c7d3df6a2a6ce
 ``` r
 # map(2021:2024,~{
 # municipality |> 
@@ -599,6 +825,30 @@ Gráfico de capacity
 # )
 ```
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+![](README_files/figure-gfm/unnamed-chunk-28-1.png)<!-- -->
+=======
+![](README_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
+
+    #> 
+    #> [[2]]
+
+![](README_files/figure-gfm/unnamed-chunk-23-2.png)<!-- -->
+
+    #> 
+    #> [[3]]
+
+![](README_files/figure-gfm/unnamed-chunk-23-3.png)<!-- -->
+
+    #> 
+    #> [[4]]
+
+![](README_files/figure-gfm/unnamed-chunk-23-4.png)<!-- -->
+>>>>>>> 10cbdd0ae903c157ed4bb20db1116cfe2d6645bf
+
+>>>>>>> d0f0dbab751688c6028bb3f5890c7d3df6a2a6ce
 ## 🧪 **Estatística Multivariada**
 
 Técnicas como Análise de Componentes Principais (PCA), agrupamentos

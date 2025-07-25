@@ -279,6 +279,7 @@ tab_stat <- emission_sources_removals_ha |>
     Krt = agricolae::kurtosis(emissions_quantity_ha)
   )
 writexl::write_xlsx(tab_stat,"output/est-removals_ha.xlsx")
+tab_stat
 ```
 
 Gráfico das remoções por ha
@@ -339,6 +340,134 @@ municipality |>
   graph_theme()}
 )
 ```
+
+
+```{r}
+emission_sources_removals_ha  |> 
+  mutate(
+  #   fct_year = fct_rev(as.factor(year)),
+  #   classe = ifelse(tratamento ==
+  #            "UC_desm" | tratamento == "TI_desm",
+  #                   "Des","Con")
+  )  |> 
+  ggplot(aes(y=as_factor(year))) +
+  geom_density_ridges(rel_min_height = 0.03,
+                      aes(x=emissions_quantity_ha/1e6, fill=as_factor(year)),
+                      alpha = .6, color = "black"
+  ) +
+  scale_fill_viridis_d() +
+  theme_ridges() +
+  coord_cartesian(xlim=c(-1e-6,1e-6)) +
+  geom_vline(xintercept = 0, colour="red") +
+  labs(x = expression(paste("Removal ( M t ",CO[2],"e per ha)")),
+       y = "Year") +
+  theme(
+    legend.position = ""
+  )
+```
+
+```{r}
+emission_sources_removals_ha  |> 
+  mutate(
+  #   fct_year = fct_rev(as.factor(year)),
+  #   classe = ifelse(tratamento ==
+  #            "UC_desm" | tratamento == "TI_desm",
+  #                   "Des","Con")
+  )  |> 
+  ggplot(aes(y=as_factor(year))) +
+  geom_density_ridges(rel_min_height = 0.03,
+                      aes(x=emissions_quantity_ha, fill=as_factor(biomes_sig)),
+                      alpha = .6, color = "black"
+  ) +
+  scale_fill_viridis_d() +
+  theme_ridges() +
+  coord_cartesian(xlim=c(-1,2)) +
+  geom_vline(xintercept = 0, colour="red") +
+  labs(x = expression(paste("Removal ( M t ",CO[2],"e per ha)")),
+       y = "Year",fill="Biome") 
+```
+
+
+
+```{r}
+map(2021:2024,~{
+municipality |> 
+  # filter(abbrev_state == "MG") |> 
+  left_join(
+    emission_sources_removals_ha |> 
+            filter(
+              # state == "MG",
+              year == .x) |> 
+              group_by(muni) |> 
+              summarise(
+                emissions_quantity_ha = mean(emissions_quantity_ha)
+              ) |> 
+      rename(name_muni = muni),
+    by = "name_muni") |> 
+  mutate(emissions_quantity_ha = ifelse(is.na(emissions_quantity_ha),
+                                        median(emissions_quantity_ha,na.rm=TRUE),
+                                        emissions_quantity_ha)) |> 
+  ggplot() +
+  geom_sf(aes(fill=emissions_quantity_ha), color="transparent",
+             size=.05, show.legend = TRUE) +
+  scale_fill_viridis_c() +
+  labs(title = .x) +
+  graph_theme()}
+)
+```
+
+```{r}
+emission_sources_removals_ha |> 
+  ggplot(aes(x=as_factor(year),y=emissions_quantity_ha,
+             fill = as_factor(year))) +
+  geom_boxplot()+
+  # geom_violin(trim = FALSE,
+  #             draw_quantiles = c( 0.5),
+  #             color="black") +
+  theme_bw() +
+  ylim(-3,3) +
+  theme(
+    legend.position = ""
+  ) +
+  scale_fill_viridis_d()
+```
+
+```{r}
+biomes <- emission_sources_removals_ha$biomes_sig |> unique()
+map(biomes, ~{
+  emission_sources_removals_ha |> 
+    filter(biomes_sig == .x) |> 
+    ggplot(aes(x=as_factor(year),y=emissions_quantity_ha,
+               fill = as_factor(year))) +
+    geom_boxplot()+
+    # geom_violin(trim = FALSE,
+    #             draw_quantiles = c( 0.5),
+    #             color="black") +
+    theme_bw() +
+    # ylim(-5e4,1e5) +
+    theme(
+      legend.position = ""
+    ) +
+    scale_fill_viridis_d()+
+    labs(title = .x,
+         y=expression(paste("Removal (M t ",CO[2],"e per ha)")),
+         x="Year")
+})
+```
+
+```{r}
+emission_sources_removals_ha |> 
+  group_by(year,biomes_sig) |> 
+  summarise(
+    Mean = mean(emissions_quantity_ha, na.rm = TRUE)) |> 
+    ggplot(aes(x=year,y=Mean,fill = biomes_sig)) +
+    geom_col(position = "dodge",color="black")+
+    theme_bw() +
+  scale_fill_viridis_d()
+```
+
+
+
 
 Criando a tabela da estatística descritiva para activity e **exportanto a tabela para pasta** `output`
 
