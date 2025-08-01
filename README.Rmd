@@ -38,7 +38,7 @@ Os scripts abaixo foram desenvolvidos em RMarkdown e estão disponíveis em form
 
 -   [`01_aquisicao_dados`](https://arpanosso.github.io//mestrado-durigan-remocoes-co2//01_aquisicao_dados.html) – Aquisição e download dos dados brutos.\
 -   [`02_tratamento_dados`](https://arpanosso.github.io//mestrado-durigan-remocoes-co2//02_tratamento_dados.html) – Faxina, filtragem e organização dos dados.\
--   [`03_preprocessamento`](https://arpanosso.github.io//mestrado-durigan-remocoes-co2//03_preprocessamento.html) – Preparação dos dados para análise.
+-   [`03_pre-processamento`](https://arpanosso.github.io//mestrado-durigan-remocoes-co2//03_preprocessamento.html) – Preparação dos dados para análise.
 
 ## 👉 [DOWNLOAD A BASE](https://drive.google.com/file/d/1EbGu6pI62J9fTxx2roxeRx6_WL4pZsbG/view?usp=drive_link)
 
@@ -125,17 +125,17 @@ tab_stat <- emission_sources_removals_ha |>
   mutate(emissions_quantity = emissions_quantity/1e6) |> 
   group_by(year) |> 
   summarise(
-    Sum = sum(emissions_quantity, na.rm = TRUE),
-    Mean = mean(emissions_quantity, na.rm = TRUE),
-    Median = median(emissions_quantity, na.rm = TRUE),
-    SD = sd(emissions_quantity, na.rm = TRUE),
+    Sum = sum(emissions_quantity_ha, na.rm = TRUE),
+    Mean = mean(emissions_quantity_ha, na.rm = TRUE),
+    Median = median(emissions_quantity_ha, na.rm = TRUE),
+    SD = sd(emissions_quantity_ha, na.rm = TRUE),
     SSE = SD/sqrt(n()),
-    Min = min(emissions_quantity, na.rm = TRUE),
-    Max = max(emissions_quantity, na.rm = TRUE),
-    Skw = agricolae::skewness(emissions_quantity),
-    Krt = agricolae::kurtosis(emissions_quantity)
+    Min = min(emissions_quantity_ha, na.rm = TRUE),
+    Max = max(emissions_quantity_ha, na.rm = TRUE),
+    Skw = agricolae::skewness(emissions_quantity_ha),
+    Krt = agricolae::kurtosis(emissions_quantity_ha)
   )
-writexl::write_xlsx(tab_stat,"output/est-removals.xlsx")
+writexl::write_xlsx(tab_stat,"output/est-removals-ha.xlsx")
 tab_stat
 ```
 
@@ -154,10 +154,10 @@ emission_sources_removals_ha  |>
   ) +
   scale_fill_viridis_d() +
   theme_ridges() +
-  coord_cartesian(xlim=c(-20e-2,10.5e-1)) +
+  coord_cartesian(xlim=c(-1,10.5e-1)) +
   geom_vline(xintercept = 0, colour="black") +
-  # labs(x = expression(paste("Removal ( M t ",CO[2],"e)")), # ATUALIZAR
-  #      y = "Year") +
+  labs(x = expression(paste("Removal ( t ",CO[2],"e)")), # ATUALIZAR
+       y = "Year") +
   theme(
     legend.position = ""
   )
@@ -178,10 +178,49 @@ emission_sources_removals_ha  |>
   ) +
   scale_fill_viridis_d(option = "inferno") +
   theme_ridges() +
-  coord_cartesian(xlim=c(-10.5e-1,20.5e-1)) +
+  coord_cartesian(xlim=c(-.5,.5)) +
   geom_vline(xintercept = 0, colour="red") +
-  labs(x = expression(paste("Removal ( M t ",CO[2],"e)")),
+  labs(x = expression(paste("Removal ( t ",CO[2],"e)")),
        y = "Year",fill="Biome") 
+```
+```{r}
+emission_sources_removals_ha |> 
+  group_by(year, biomes_sig) |> 
+  summarise(
+    sum_removal = sum(emissions_quantity,na.rm = TRUE),
+  ) |> 
+  ggplot(aes(x=year,y=sum_removal, fill = biomes_sig)) +
+  geom_col(color="black") +
+  scale_fill_viridis_d(option = "inferno") +
+  theme_bw()
+```
+
+
+```{r}
+emission_sources_removals_ha |> 
+  group_by(year, biomes_sig) |> 
+  summarise(
+    sum_removal = sum(emissions_quantity,na.rm = TRUE),
+    sum_ha = sum(area_ha, na.rm=TRUE)
+  ) |> 
+  ggplot(aes(x=year,y=sum_ha, fill = biomes_sig)) +
+  geom_col(color="black") +
+  scale_fill_viridis_d(option = "inferno") +
+  theme_bw()
+```
+
+```{r}
+emission_sources_removals_ha |> 
+  group_by(year, biomes_sig) |> 
+  summarise(
+    sum_removal = sum(emissions_quantity,na.rm = TRUE),
+    sum_ha = sum(area_ha, na.rm=TRUE)
+  ) |> 
+  mutate(sum_removal_ha = sum_removal/sum_ha) |> 
+  ggplot(aes(x=year,y=sum_removal_ha, fill = biomes_sig)) +
+  geom_col(color="black") +
+  scale_fill_viridis_d(option = "inferno") +
+  theme_bw()
 ```
 
 Gráfico das remoções
