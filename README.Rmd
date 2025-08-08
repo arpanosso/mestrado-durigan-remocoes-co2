@@ -49,6 +49,7 @@ Importante dropar as colunas `Other` e as emissões provenientes de áreas urban
 ```{r}
 library(tidyverse)
 library(ggridges)
+library(ggpubr)
 library(geobr)
 library(pracma)
 source("R/graph-theme.R")
@@ -121,25 +122,6 @@ country_br |>
 Criando a tabela da estatística descritiva para as remoções (M t CO~2~e) e **exportanto a tabela para pasta** `output`
 
 ```{r}
-tab_stat <- emission_sources_removals_ha |> 
-  mutate(emissions_quantity = emissions_quantity/1e6) |> 
-  group_by(year) |> 
-  summarise(
-    Sum = sum(emissions_quantity_ha, na.rm = TRUE),
-    Mean = mean(emissions_quantity_ha, na.rm = TRUE),
-    Median = median(emissions_quantity_ha, na.rm = TRUE),
-    SD = sd(emissions_quantity_ha, na.rm = TRUE),
-    SSE = SD/sqrt(n()),
-    Min = min(emissions_quantity_ha, na.rm = TRUE),
-    Max = max(emissions_quantity_ha, na.rm = TRUE),
-    Skw = agricolae::skewness(emissions_quantity_ha),
-    Krt = agricolae::kurtosis(emissions_quantity_ha)
-  )
-writexl::write_xlsx(tab_stat,"output/est-removals-ha.xlsx")
-tab_stat
-```
-
-```{r}
 emission_sources_removals_ha  |> 
   mutate(
   #   fct_year = fct_rev(as.factor(year)),
@@ -187,14 +169,13 @@ emission_sources_removals_ha  |>
 emission_sources_removals_ha |> 
   group_by(year, biomes_sig) |> 
   summarise(
-    sum_removal = sum(emissions_quantity,na.rm = TRUE),
+    sum_removal = sum(emissions_quantity_ha,na.rm = TRUE),
   ) |> 
   ggplot(aes(x=year,y=sum_removal, fill = biomes_sig)) +
   geom_col(color="black") +
   scale_fill_viridis_d(option = "inferno") +
   theme_bw()
 ```
-
 
 ```{r}
 emission_sources_removals_ha |> 
@@ -214,24 +195,35 @@ emission_sources_removals_ha |>
   group_by(year, biomes_sig) |> 
   summarise(
     sum_removal = sum(emissions_quantity,na.rm = TRUE),
-    sum_ha = sum(area_ha, na.rm=TRUE)
+    sum_ha = sum(area_ha, na.rm=TRUE),
+    .groups = "drop"
   ) |> 
-  mutate(sum_removal_ha = sum_removal/sum_ha) |> 
+  mutate(sum_removal_ha = sum_removal/sum_ha *1000) |> 
   ggplot(aes(x=year,y=sum_removal_ha, fill = biomes_sig)) +
   geom_col(color="black") +
   scale_fill_viridis_d(option = "inferno") +
+  labs(x="Year", fill="Biome",
+        y = expression(
+     paste("Removal ( kg ",CO[2],"e)"))
+    ) +
   theme_bw()
 ```
-
-Gráfico das remoções
 
 ```{r}
-tab_stat |> 
-  ggplot(aes(x=year, y=Sum/1e6)) +
-  geom_col(color="black",fill="cyan4") +
-  labs(y = expression(paste("Removal (M t ",CO[2],"e)"))) +
-  theme_bw()
+tab_stat <- emission_sources_removals_ha |> 
+  group_by(year, biomes_sig) |> 
+  summarise(
+    sum_removal = sum(emissions_quantity,na.rm = TRUE),
+    sum_ha = sum(area_ha, na.rm=TRUE)
+  ) |> 
+  mutate(sum_removal_ha = sum_removal/sum_ha*1000)
+writexl::write_xlsx(tab_stat,"output/est-removals-ha-biome.xlsx")
+tab_stat
 ```
+
+Mapas das remoções
+
+
 
 ```{r}
 map(2021:2023,~{
@@ -633,6 +625,73 @@ Gráfico de capacity
 ## 🧪 **Estatística Multivariada**
 
 Técnicas como Análise de Componentes Principais (PCA), agrupamentos (clustering) e correlações espaciais.
+
+### Regressão linear entre remoções e capacitu_factor
+
+```{r}
+emission_sources_removals_ha |> 
+  ggplot(aes(x=capacity_factor, y = emissions_quantity,
+             color = biomes_sig)) +
+  geom_point() + 
+  facet_wrap(~year, ncol=2,scal="free") +
+  theme_bw()
+```
+
+```{r}
+my_biomes <- emission_sources_removals_ha |> 
+  pull(biomes_sig) |> 
+  unique()
+
+map(my_biomes, ~{emission_sources_removals_ha |> 
+  filter(year == 2021,
+         biomes_sig == .x) |> 
+  ggscatter(
+    x = "capacity_factor", y = "emissions_quantity",
+    add = "reg.line", color="red",title = paste0(.x,"-2021")
+  ) + # coord_cartesian(ylim = c(382.5,392))+
+  # stat_cor() + #label.y = 8E6, label.x = 0
+  stat_regline_equation(position = "jitter") +
+  labs(y="")})
+```
+```{r}
+map(my_biomes, ~{emission_sources_removals_ha |> 
+  filter(year == 2022,
+         biomes_sig == .x) |> 
+  ggscatter(
+    x = "capacity_factor", y = "emissions_quantity",
+    add = "reg.line", color="aquamarine4",title = paste0(.x,"-2021")
+  ) + # coord_cartesian(ylim = c(382.5,392))+
+  # stat_cor() + #label.y = 8E6, label.x = 0
+  stat_regline_equation() +
+  labs(y="")})
+```
+
+```{r}
+map(my_biomes, ~{emission_sources_removals_ha |> 
+  filter(year == 2023,
+         biomes_sig == .x) |> 
+  ggscatter(
+    x = "capacity_factor", y = "emissions_quantity",
+    add = "reg.line", color="blue",title = paste0(.x,"-2021")
+  ) + # coord_cartesian(ylim = c(382.5,392))+
+  # stat_cor() + #label.y = 8E6, label.x = 0
+  stat_regline_equation() +
+  labs(y="")})
+```
+
+```{r}
+emission_sources_removals_ha |> 
+  ungroup() |> 
+  select(year, biomes_sig, emissions_quantity, capacity_factor) |> 
+  group_by(biomes_sig) |> 
+  summarise(
+    correlacao = cor(emissions_quantity, capacity_factor, method = "pearson"),
+    p_valor = cor.test(emissions_quantity, capacity_factor)$p.value,
+    n = n(),
+    .groups = "drop"
+  )
+```
+
 
 ## 🤖 **Modelagem Estatística e Preditiva**
 

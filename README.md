@@ -48,6 +48,7 @@ e o ano até $2024$. Nesse caso, vamos transformar os dados de
 ``` r
 library(tidyverse)
 library(ggridges)
+library(ggpubr)
 library(geobr)
 library(pracma)
 source("R/graph-theme.R")
@@ -126,31 +127,6 @@ Criando a tabela da estatística descritiva para as remoções (M t
 CO<sub>2</sub>e) e **exportanto a tabela para pasta** `output`
 
 ``` r
-tab_stat <- emission_sources_removals_ha |> 
-  mutate(emissions_quantity = emissions_quantity/1e6) |> 
-  group_by(year) |> 
-  summarise(
-    Sum = sum(emissions_quantity_ha, na.rm = TRUE),
-    Mean = mean(emissions_quantity_ha, na.rm = TRUE),
-    Median = median(emissions_quantity_ha, na.rm = TRUE),
-    SD = sd(emissions_quantity_ha, na.rm = TRUE),
-    SSE = SD/sqrt(n()),
-    Min = min(emissions_quantity_ha, na.rm = TRUE),
-    Max = max(emissions_quantity_ha, na.rm = TRUE),
-    Skw = agricolae::skewness(emissions_quantity_ha),
-    Krt = agricolae::kurtosis(emissions_quantity_ha)
-  )
-writexl::write_xlsx(tab_stat,"output/est-removals-ha.xlsx")
-tab_stat
-#> # A tibble: 3 × 10
-#>    year    Sum    Mean  Median    SD     SSE    Min   Max   Skw   Krt
-#>   <dbl>  <dbl>   <dbl>   <dbl> <dbl>   <dbl>  <dbl> <dbl> <dbl> <dbl>
-#> 1  2021 -8777. -0.121  -0.0581 0.559 0.00205 -17.4   5.28 -11.1  333.
-#> 2  2022 26602.  0.368   0.233  0.784 0.00287  -1.34 20.5   13.7  290.
-#> 3  2023  6111.  0.0845  0.0450 0.339 0.00124  -2.34  8.29  13.2  284.
-```
-
-``` r
 emission_sources_removals_ha  |> 
   mutate(
   #   fct_year = fct_rev(as.factor(year)),
@@ -174,7 +150,7 @@ emission_sources_removals_ha  |>
   )
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 ``` r
 emission_sources_removals_ha  |> 
@@ -197,13 +173,13 @@ emission_sources_removals_ha  |>
        y = "Year",fill="Biome") 
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
 ``` r
 emission_sources_removals_ha |> 
   group_by(year, biomes_sig) |> 
   summarise(
-    sum_removal = sum(emissions_quantity,na.rm = TRUE),
+    sum_removal = sum(emissions_quantity_ha,na.rm = TRUE),
   ) |> 
   ggplot(aes(x=year,y=sum_removal, fill = biomes_sig)) +
   geom_col(color="black") +
@@ -211,7 +187,7 @@ emission_sources_removals_ha |>
   theme_bw()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 
 ``` r
 emission_sources_removals_ha |> 
@@ -226,35 +202,64 @@ emission_sources_removals_ha |>
   theme_bw()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 ``` r
 emission_sources_removals_ha |> 
   group_by(year, biomes_sig) |> 
   summarise(
     sum_removal = sum(emissions_quantity,na.rm = TRUE),
-    sum_ha = sum(area_ha, na.rm=TRUE)
+    sum_ha = sum(area_ha, na.rm=TRUE),
+    .groups = "drop"
   ) |> 
-  mutate(sum_removal_ha = sum_removal/sum_ha) |> 
+  mutate(sum_removal_ha = sum_removal/sum_ha *1000) |> 
   ggplot(aes(x=year,y=sum_removal_ha, fill = biomes_sig)) +
   geom_col(color="black") +
   scale_fill_viridis_d(option = "inferno") +
+  labs(x="Year", fill="Biome",
+        y = expression(
+     paste("Removal ( kg ",CO[2],"e)"))
+    ) +
   theme_bw()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
-
-Gráfico das remoções
+![](README_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 ``` r
-tab_stat |> 
-  ggplot(aes(x=year, y=Sum/1e6)) +
-  geom_col(color="black",fill="cyan4") +
-  labs(y = expression(paste("Removal (M t ",CO[2],"e)"))) +
-  theme_bw()
+tab_stat <- emission_sources_removals_ha |> 
+  group_by(year, biomes_sig) |> 
+  summarise(
+    sum_removal = sum(emissions_quantity,na.rm = TRUE),
+    sum_ha = sum(area_ha, na.rm=TRUE)
+  ) |> 
+  mutate(sum_removal_ha = sum_removal/sum_ha*1000)
+writexl::write_xlsx(tab_stat,"output/est-removals-ha-biome.xlsx")
+tab_stat
+#> # A tibble: 18 × 5
+#> # Groups:   year [3]
+#>     year biomes_sig sum_removal      sum_ha sum_removal_ha
+#>    <dbl> <chr>            <dbl>       <dbl>          <dbl>
+#>  1  2021 AF         -323906754. 2091798884.         -155. 
+#>  2  2021 AMZ         685982767. 5616477035.          122. 
+#>  3  2021 CAAT       -272603694. 1429327350.         -191. 
+#>  4  2021 CERR        133325352. 2500212129.           53.3
+#>  5  2021 PMP          29730568.  227125558.          131. 
+#>  6  2021 PNT          33861455.  214433404.          158. 
+#>  7  2022 AF          485398301. 2091798884.          232. 
+#>  8  2022 AMZ        1660479083. 5616477035.          296. 
+#>  9  2022 CAAT        514840190. 1429327350.          360. 
+#> 10  2022 CERR        878391193. 2500212129.          351. 
+#> 11  2022 PMP          38580707.  227125558.          170. 
+#> 12  2022 PNT          80785798.  214433404.          377. 
+#> 13  2023 AF           41282750. 2091798884.           19.7
+#> 14  2023 AMZ        1063160075. 5616477035.          189. 
+#> 15  2023 CAAT         29530305. 1429327350.           20.7
+#> 16  2023 CERR        481811278. 2500212129.          193. 
+#> 17  2023 PMP         -13519842.  227125558.          -59.5
+#> 18  2023 PNT          56891085.  214433404.          265.
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+Mapas das remoções
 
 ``` r
 map(2021:2023,~{
@@ -285,17 +290,17 @@ municipality |>
 #> [[1]]
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
     #> 
     #> [[2]]
 
-![](README_files/figure-gfm/unnamed-chunk-13-2.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-12-2.png)<!-- -->
 
     #> 
     #> [[3]]
 
-![](README_files/figure-gfm/unnamed-chunk-13-3.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-12-3.png)<!-- -->
 
 ``` r
 biomes <- emission_sources_removals_ha$biomes_sig |> unique()
@@ -321,32 +326,32 @@ map(biomes, ~{
 #> [[1]]
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
 
     #> 
     #> [[2]]
 
-![](README_files/figure-gfm/unnamed-chunk-14-2.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-13-2.png)<!-- -->
 
     #> 
     #> [[3]]
 
-![](README_files/figure-gfm/unnamed-chunk-14-3.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-13-3.png)<!-- -->
 
     #> 
     #> [[4]]
 
-![](README_files/figure-gfm/unnamed-chunk-14-4.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-13-4.png)<!-- -->
 
     #> 
     #> [[5]]
 
-![](README_files/figure-gfm/unnamed-chunk-14-5.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-13-5.png)<!-- -->
 
     #> 
     #> [[6]]
 
-![](README_files/figure-gfm/unnamed-chunk-14-6.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-13-6.png)<!-- -->
 
 ``` r
 emission_sources_removals_ha |> 
@@ -363,7 +368,7 @@ emission_sources_removals_ha |>
          x="Year")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
 Criando a tabela da estatística descritiva para as remoções por hectare
 e **exportanto a tabela para pasta** `output`.
@@ -402,7 +407,7 @@ tab_stat |>
   theme_bw()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
 ``` r
 emission_sources_removals_ha |> 
@@ -419,7 +424,7 @@ emission_sources_removals_ha |>
          x="Year")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
 ``` r
 abbrev_region <- municipality |> select(nome_regiao) |> 
@@ -455,77 +460,77 @@ municipality |>
 #> [[1]]
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
 
     #> 
     #> [[2]]
 
-![](README_files/figure-gfm/unnamed-chunk-19-2.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-18-2.png)<!-- -->
 
     #> 
     #> [[3]]
 
-![](README_files/figure-gfm/unnamed-chunk-19-3.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-18-3.png)<!-- -->
 
     #> 
     #> [[4]]
 
-![](README_files/figure-gfm/unnamed-chunk-19-4.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-18-4.png)<!-- -->
 
     #> 
     #> [[5]]
 
-![](README_files/figure-gfm/unnamed-chunk-19-5.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-18-5.png)<!-- -->
 
     #> 
     #> [[6]]
 
-![](README_files/figure-gfm/unnamed-chunk-19-6.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-18-6.png)<!-- -->
 
     #> 
     #> [[7]]
 
-![](README_files/figure-gfm/unnamed-chunk-19-7.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-18-7.png)<!-- -->
 
     #> 
     #> [[8]]
 
-![](README_files/figure-gfm/unnamed-chunk-19-8.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-18-8.png)<!-- -->
 
     #> 
     #> [[9]]
 
-![](README_files/figure-gfm/unnamed-chunk-19-9.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-18-9.png)<!-- -->
 
     #> 
     #> [[10]]
 
-![](README_files/figure-gfm/unnamed-chunk-19-10.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-18-10.png)<!-- -->
 
     #> 
     #> [[11]]
 
-![](README_files/figure-gfm/unnamed-chunk-19-11.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-18-11.png)<!-- -->
 
     #> 
     #> [[12]]
 
-![](README_files/figure-gfm/unnamed-chunk-19-12.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-18-12.png)<!-- -->
 
     #> 
     #> [[13]]
 
-![](README_files/figure-gfm/unnamed-chunk-19-13.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-18-13.png)<!-- -->
 
     #> 
     #> [[14]]
 
-![](README_files/figure-gfm/unnamed-chunk-19-14.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-18-14.png)<!-- -->
 
     #> 
     #> [[15]]
 
-![](README_files/figure-gfm/unnamed-chunk-19-15.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-18-15.png)<!-- -->
 
 ``` r
 emission_sources_removals_ha  |> 
@@ -551,7 +556,7 @@ emission_sources_removals_ha  |>
   )
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
 
 ``` r
 emission_sources_removals_ha  |> 
@@ -574,7 +579,7 @@ emission_sources_removals_ha  |>
        y = "Year",fill="Biome") 
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
 
 ``` r
 map(2021:2024,~{
@@ -604,22 +609,22 @@ municipality |>
 #> [[1]]
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
 
     #> 
     #> [[2]]
 
-![](README_files/figure-gfm/unnamed-chunk-22-2.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-21-2.png)<!-- -->
 
     #> 
     #> [[3]]
 
-![](README_files/figure-gfm/unnamed-chunk-22-3.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-21-3.png)<!-- -->
 
     #> 
     #> [[4]]
 
-![](README_files/figure-gfm/unnamed-chunk-22-4.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-21-4.png)<!-- -->
 
 ``` r
 emission_sources_removals_ha |> 
@@ -637,7 +642,7 @@ emission_sources_removals_ha |>
   scale_fill_viridis_d()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
 
 ``` r
 biomes <- emission_sources_removals_ha$biomes_sig |> unique()
@@ -663,32 +668,32 @@ map(biomes, ~{
 #> [[1]]
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
 
     #> 
     #> [[2]]
 
-![](README_files/figure-gfm/unnamed-chunk-24-2.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-23-2.png)<!-- -->
 
     #> 
     #> [[3]]
 
-![](README_files/figure-gfm/unnamed-chunk-24-3.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-23-3.png)<!-- -->
 
     #> 
     #> [[4]]
 
-![](README_files/figure-gfm/unnamed-chunk-24-4.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-23-4.png)<!-- -->
 
     #> 
     #> [[5]]
 
-![](README_files/figure-gfm/unnamed-chunk-24-5.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-23-5.png)<!-- -->
 
     #> 
     #> [[6]]
 
-![](README_files/figure-gfm/unnamed-chunk-24-6.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-23-6.png)<!-- -->
 
 ``` r
 emission_sources_removals_ha |> 
@@ -701,7 +706,7 @@ emission_sources_removals_ha |>
   scale_fill_viridis_d()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
 
 Criando a tabela da estatística descritiva para activity e **exportanto
 a tabela para pasta** `output`
@@ -831,6 +836,168 @@ Gráfico de capacity
 
 Técnicas como Análise de Componentes Principais (PCA), agrupamentos
 (clustering) e correlações espaciais.
+
+### Regressão linear entre remoções e capacitu_factor
+
+``` r
+emission_sources_removals_ha |> 
+  ggplot(aes(x=capacity_factor, y = emissions_quantity,
+             color = biomes_sig)) +
+  geom_point() + 
+  facet_wrap(~year, ncol=2,scal="free") +
+  theme_bw()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
+
+``` r
+my_biomes <- emission_sources_removals_ha |> 
+  pull(biomes_sig) |> 
+  unique()
+
+map(my_biomes, ~{emission_sources_removals_ha |> 
+  filter(year == 2021,
+         biomes_sig == .x) |> 
+  ggscatter(
+    x = "capacity_factor", y = "emissions_quantity",
+    add = "reg.line", color="red",title = paste0(.x,"-2021")
+  ) + # coord_cartesian(ylim = c(382.5,392))+
+  # stat_cor() + #label.y = 8E6, label.x = 0
+  stat_regline_equation(position = "jitter") +
+  labs(y="")})
+#> [[1]]
+```
+
+![](README_files/figure-gfm/unnamed-chunk-32-1.png)<!-- -->
+
+    #> 
+    #> [[2]]
+
+![](README_files/figure-gfm/unnamed-chunk-32-2.png)<!-- -->
+
+    #> 
+    #> [[3]]
+
+![](README_files/figure-gfm/unnamed-chunk-32-3.png)<!-- -->
+
+    #> 
+    #> [[4]]
+
+![](README_files/figure-gfm/unnamed-chunk-32-4.png)<!-- -->
+
+    #> 
+    #> [[5]]
+
+![](README_files/figure-gfm/unnamed-chunk-32-5.png)<!-- -->
+
+    #> 
+    #> [[6]]
+
+![](README_files/figure-gfm/unnamed-chunk-32-6.png)<!-- -->
+
+``` r
+map(my_biomes, ~{emission_sources_removals_ha |> 
+  filter(year == 2022,
+         biomes_sig == .x) |> 
+  ggscatter(
+    x = "capacity_factor", y = "emissions_quantity",
+    add = "reg.line", color="aquamarine4",title = paste0(.x,"-2021")
+  ) + # coord_cartesian(ylim = c(382.5,392))+
+  # stat_cor() + #label.y = 8E6, label.x = 0
+  stat_regline_equation() +
+  labs(y="")})
+#> [[1]]
+```
+
+![](README_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
+
+    #> 
+    #> [[2]]
+
+![](README_files/figure-gfm/unnamed-chunk-33-2.png)<!-- -->
+
+    #> 
+    #> [[3]]
+
+![](README_files/figure-gfm/unnamed-chunk-33-3.png)<!-- -->
+
+    #> 
+    #> [[4]]
+
+![](README_files/figure-gfm/unnamed-chunk-33-4.png)<!-- -->
+
+    #> 
+    #> [[5]]
+
+![](README_files/figure-gfm/unnamed-chunk-33-5.png)<!-- -->
+
+    #> 
+    #> [[6]]
+
+![](README_files/figure-gfm/unnamed-chunk-33-6.png)<!-- -->
+
+``` r
+map(my_biomes, ~{emission_sources_removals_ha |> 
+  filter(year == 2023,
+         biomes_sig == .x) |> 
+  ggscatter(
+    x = "capacity_factor", y = "emissions_quantity",
+    add = "reg.line", color="blue",title = paste0(.x,"-2021")
+  ) + # coord_cartesian(ylim = c(382.5,392))+
+  # stat_cor() + #label.y = 8E6, label.x = 0
+  stat_regline_equation() +
+  labs(y="")})
+#> [[1]]
+```
+
+![](README_files/figure-gfm/unnamed-chunk-34-1.png)<!-- -->
+
+    #> 
+    #> [[2]]
+
+![](README_files/figure-gfm/unnamed-chunk-34-2.png)<!-- -->
+
+    #> 
+    #> [[3]]
+
+![](README_files/figure-gfm/unnamed-chunk-34-3.png)<!-- -->
+
+    #> 
+    #> [[4]]
+
+![](README_files/figure-gfm/unnamed-chunk-34-4.png)<!-- -->
+
+    #> 
+    #> [[5]]
+
+![](README_files/figure-gfm/unnamed-chunk-34-5.png)<!-- -->
+
+    #> 
+    #> [[6]]
+
+![](README_files/figure-gfm/unnamed-chunk-34-6.png)<!-- -->
+
+``` r
+emission_sources_removals_ha |> 
+  ungroup() |> 
+  select(year, biomes_sig, emissions_quantity, capacity_factor) |> 
+  group_by(biomes_sig) |> 
+  summarise(
+    correlacao = cor(emissions_quantity, capacity_factor, method = "pearson"),
+    p_valor = cor.test(emissions_quantity, capacity_factor)$p.value,
+    n = n(),
+    .groups = "drop"
+  )
+#> # A tibble: 6 × 4
+#>   biomes_sig correlacao   p_valor      n
+#>   <chr>           <dbl>     <dbl>  <int>
+#> 1 AF              0.106 6.72e-271 109404
+#> 2 AMZ             0.522 0          19728
+#> 3 CAAT            0.197 0          45900
+#> 4 CERR            0.631 0          42120
+#> 5 PMP             0.269 1.49e-101   6084
+#> 6 PNT             0.692 1.27e- 52    360
+```
 
 ## 🤖 **Modelagem Estatística e Preditiva**
 
