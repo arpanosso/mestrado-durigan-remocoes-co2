@@ -4,10 +4,10 @@
 # VARIABILIDADE ESPAÇOTEMPORAL DAS REMOÇÕES DE CO<sub>2</sub> POR ECOSSISTEMAS FLORESTAIS BRASILEIROS (2021–2023)
 
 Repositório de apoio ao projeto de pesquisa de mestrado com foco na
-análise espacial e temporal das remoções de dióxido de carbono (CO₂)
-pela biomassa viva de ecossistemas florestais brasileiros, no período de
-2021 a 2023, com base em dados da plataforma Climate
-[TRACE/CTrees](https://climatetrace.org/).
+análise espacial e temporal das remoções de dióxido de carbono
+(CO<sub>2</sub>) pela biomassa viva de ecossistemas florestais
+brasileiros, no período de 2021 a 2023, com base em dados da plataforma
+Climate [TRACE/CTrees](https://climatetrace.org/).
 
 ## 👨‍🔬 Autores
 
@@ -63,13 +63,16 @@ emission_sources_removals <-
   mutate(
     emissions_quantity = -1*emissions_quantity,
     biomes_sig = ifelse(biomes_sig == "Other","AF",biomes_sig)
-  ) 
+  ) |> 
+  filter(
+    emissions_quantity >=0
+  )
 ```
 
 ## 🔍 **Análise Exploratória dos Dados**
 
 Visualizações gráficas, estatísticas descritivas e inspeção de padrões
-regionais e temporais. Inicialmente são carregados os polígonos dos país
+regionais e temporais. Inicialmente são carregados os polígonos do país
 e dos municípios, e a área dos polígomos é calculada pela função
 `areaPolygon` do pacote `{geosphere}` Esse método preserva o sistema
 geográfico WGS84 e considera a curvatura da Terra, ideal para áreas
@@ -167,7 +170,7 @@ emission_sources_removals_ha  |>
   ) +
   scale_fill_viridis_d(option = "inferno") +
   theme_ridges() +
-  coord_cartesian(xlim=c(-.5,.5)) +
+  coord_cartesian(xlim=c(-1,1)) +
   geom_vline(xintercept = 0, colour="red") +
   labs(x = expression(paste("Removal ( t ",CO[2],"e)")),
        y = "Year",fill="Biome") 
@@ -239,24 +242,24 @@ tab_stat
 #> # Groups:   year [3]
 #>     year biomes_sig sum_removal      sum_ha sum_removal_ha
 #>    <dbl> <chr>            <dbl>       <dbl>          <dbl>
-#>  1  2021 AF         -323906754. 2091798884.         -155. 
-#>  2  2021 AMZ         685982767. 5616477035.          122. 
-#>  3  2021 CAAT       -272603694. 1429327350.         -191. 
-#>  4  2021 CERR        133325352. 2500212129.           53.3
-#>  5  2021 PMP          29730568.  227125558.          131. 
+#>  1  2021 AF           50332051.  773500145.           65.1
+#>  2  2021 AMZ         781794475. 4863993091.          161. 
+#>  3  2021 CAAT         12417626.  202668507.           61.3
+#>  4  2021 CERR        240879170. 1667710663.          144. 
+#>  5  2021 PMP          32271138.  168243184.          192. 
 #>  6  2021 PNT          33861455.  214433404.          158. 
-#>  7  2022 AF          485398301. 2091798884.          232. 
-#>  8  2022 AMZ        1660479083. 5616477035.          296. 
-#>  9  2022 CAAT        514840190. 1429327350.          360. 
-#> 10  2022 CERR        878391193. 2500212129.          351. 
-#> 11  2022 PMP          38580707.  227125558.          170. 
-#> 12  2022 PNT          80785798.  214433404.          377. 
-#> 13  2023 AF           41282750. 2091798884.           19.7
-#> 14  2023 AMZ        1063160075. 5616477035.          189. 
-#> 15  2023 CAAT         29530305. 1429327350.           20.7
-#> 16  2023 CERR        481811278. 2500212129.          193. 
-#> 17  2023 PMP         -13519842.  227125558.          -59.5
-#> 18  2023 PNT          56891085.  214433404.          265.
+#>  7  2022 AF          501203201. 1573907747.          318. 
+#>  8  2022 AMZ        1715879494. 4929796265.          348. 
+#>  9  2022 CAAT        516414784. 1413441928.          365. 
+#> 10  2022 CERR        894385833. 2315684868.          386. 
+#> 11  2022 PMP          43612245.  179011937.          244. 
+#> 12  2022 PNT          80814206.  214025159.          378. 
+#> 13  2023 AF           89621261. 1500091514.           59.7
+#> 14  2023 AMZ        1078061040. 5146429396.          209. 
+#> 15  2023 CAAT         70465080.  794201030.           88.7
+#> 16  2023 CERR        485991296. 2437592221.          199. 
+#> 17  2023 PMP           4964424.   77631575.           63.9
+#> 18  2023 PNT          57668709.  194082613.          297.
 ```
 
 Mapas das remoções
@@ -282,7 +285,7 @@ municipality |>
   ggplot() +
   geom_sf(aes(fill=emissions_quantity), color="transparent",
              size=.05, show.legend = TRUE) +
-  scale_fill_viridis_c(option = "magma") +
+  scale_fill_viridis_c() +
   labs(title = .x,
        fill = "Removals") +
   graph_theme()}
@@ -390,11 +393,11 @@ tab_stat <- emission_sources_removals_ha |>
 writexl::write_xlsx(tab_stat,"output/est-removals_ha.xlsx")
 tab_stat
 #> # A tibble: 3 × 10
-#>    year    Sum    Mean  Median    SD     SSE    Min   Max   Skw   Krt
-#>   <dbl>  <dbl>   <dbl>   <dbl> <dbl>   <dbl>  <dbl> <dbl> <dbl> <dbl>
-#> 1  2021 -8777. -0.121  -0.0581 0.559 0.00205 -17.4   5.28 -11.1  333.
-#> 2  2022 26602.  0.368   0.233  0.784 0.00287  -1.34 20.5   13.7  290.
-#> 3  2023  6111.  0.0845  0.0450 0.339 0.00124  -2.34  8.29  13.2  284.
+#>    year    Sum  Mean Median    SD     SSE   Min   Max   Skw   Krt
+#>   <dbl>  <dbl> <dbl>  <dbl> <dbl>   <dbl> <dbl> <dbl> <dbl> <dbl>
+#> 1  2021  5353. 0.201 0.123  0.355 0.00215     0  5.28  7.87  85.7
+#> 2  2022 27687. 0.439 0.288  0.813 0.00319     0 20.5  13.9  282. 
+#> 3  2023  8066. 0.160 0.0887 0.370 0.00164     0  8.29 14.1  272.
 ```
 
 Gráfico das remoções por ha
@@ -989,14 +992,14 @@ emission_sources_removals_ha |>
     .groups = "drop"
   )
 #> # A tibble: 6 × 4
-#>   biomes_sig correlacao   p_valor      n
-#>   <chr>           <dbl>     <dbl>  <int>
-#> 1 AF              0.106 6.72e-271 109404
-#> 2 AMZ             0.522 0          19728
-#> 3 CAAT            0.197 0          45900
-#> 4 CERR            0.631 0          42120
-#> 5 PMP             0.269 1.49e-101   6084
-#> 6 PNT             0.692 1.27e- 52    360
+#>   biomes_sig correlacao  p_valor     n
+#>   <chr>           <dbl>    <dbl> <int>
+#> 1 AF              0.602 0        61848
+#> 2 AMZ             0.579 0        16668
+#> 3 CAAT            0.688 0        25932
+#> 4 CERR            0.733 0        34812
+#> 5 PMP             0.643 0         3744
+#> 6 PNT             0.694 1.16e-49   336
 ```
 
 ## 🤖 **Modelagem Estatística e Preditiva**

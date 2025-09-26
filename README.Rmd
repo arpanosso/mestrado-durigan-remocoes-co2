@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 
 # VARIABILIDADE ESPAÇOTEMPORAL DAS REMOÇÕES DE CO~2~ POR ECOSSISTEMAS FLORESTAIS BRASILEIROS (2021–2023)
 
-Repositório de apoio ao projeto de pesquisa de mestrado com foco na análise espacial e temporal das remoções de dióxido de carbono (CO₂) pela biomassa viva de ecossistemas florestais brasileiros, no período de 2021 a 2023, com base em dados da plataforma Climate [TRACE/CTrees](https://climatetrace.org/).
+Repositório de apoio ao projeto de pesquisa de mestrado com foco na análise espacial e temporal das remoções de dióxido de carbono (CO~2~) pela biomassa viva de ecossistemas florestais brasileiros, no período de 2021 a 2023, com base em dados da plataforma Climate [TRACE/CTrees](https://climatetrace.org/).
 
 ## 👨‍🔬 Autores
 
@@ -64,12 +64,15 @@ emission_sources_removals <-
   mutate(
     emissions_quantity = -1*emissions_quantity,
     biomes_sig = ifelse(biomes_sig == "Other","AF",biomes_sig)
-  ) 
+  ) |> 
+  filter(
+    emissions_quantity >=0
+  )
 ```
 
 ## 🔍 **Análise Exploratória dos Dados**
 
-Visualizações gráficas, estatísticas descritivas e inspeção de padrões regionais e temporais. Inicialmente são carregados os polígonos dos país e dos municípios, e a área dos polígomos é calculada pela função `areaPolygon` do pacote `{geosphere}` Esse método preserva o sistema geográfico WGS84 e considera a curvatura da Terra, ideal para áreas irregulares e grandes. O resultado será dado em hectares.
+Visualizações gráficas, estatísticas descritivas e inspeção de padrões regionais e temporais. Inicialmente são carregados os polígonos do país e dos municípios, e a área dos polígomos é calculada pela função `areaPolygon` do pacote `{geosphere}` Esse método preserva o sistema geográfico WGS84 e considera a curvatura da Terra, ideal para áreas irregulares e grandes. O resultado será dado em hectares.
 
 ```{r}
 country_br <- read_country(showProgress = FALSE)
@@ -160,7 +163,7 @@ emission_sources_removals_ha  |>
   ) +
   scale_fill_viridis_d(option = "inferno") +
   theme_ridges() +
-  coord_cartesian(xlim=c(-.5,.5)) +
+  coord_cartesian(xlim=c(-1,1)) +
   geom_vline(xintercept = 0, colour="red") +
   labs(x = expression(paste("Removal ( t ",CO[2],"e)")),
        y = "Year",fill="Biome") 
@@ -246,7 +249,7 @@ municipality |>
   ggplot() +
   geom_sf(aes(fill=emissions_quantity), color="transparent",
              size=.05, show.legend = TRUE) +
-  scale_fill_viridis_c(option = "magma") +
+  scale_fill_viridis_c() +
   labs(title = .x,
        fill = "Removals") +
   graph_theme()}
