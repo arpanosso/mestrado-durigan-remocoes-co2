@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# VARIABILIDADE ESPAÇOTEMPORAL DAS REMOÇÕES DE CO~2~ POR ECOSSISTEMAS FLORESTAIS BRASILEIROS (2021–2023)
+# REMOÇÕES DE CO~2~ POR ECOSSISTEMAS FLORESTAIS BRASILEIROS (2021–2023)
 
 Repositório de apoio ao projeto de pesquisa de mestrado com foco na análise espacial e temporal das remoções de dióxido de carbono (CO~2~) pela biomassa viva de ecossistemas florestais brasileiros, no período de 2021 a 2023, com base em dados da plataforma Climate [TRACE/CTrees](https://climatetrace.org/).
 
@@ -249,7 +249,10 @@ municipality |>
   ggplot() +
   geom_sf(aes(fill=emissions_quantity), color="transparent",
              size=.05, show.legend = TRUE) +
-  scale_fill_viridis_c() +
+  scale_fill_viridis_c(
+    limits = c(0, 10),   # mesma escala
+      # oob = scales::squish   # evita que valores fora da faixa quebrem
+  ) +
   labs(title = .x,
        fill = "Removals") +
   graph_theme()}

@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# VARIABILIDADE ESPAÇOTEMPORAL DAS REMOÇÕES DE CO<sub>2</sub> POR ECOSSISTEMAS FLORESTAIS BRASILEIROS (2021–2023)
+# REMOÇÕES DE CO<sub>2</sub> POR ECOSSISTEMAS FLORESTAIS BRASILEIROS (2021–2023)
 
 Repositório de apoio ao projeto de pesquisa de mestrado com foco na
 análise espacial e temporal das remoções de dióxido de carbono
@@ -42,7 +42,7 @@ em formato HTML:
 Importante dropar as colunas `Other` e as emissões provenientes de áreas
 urbanas, uma vez que está estão incorporadas nos `source_type` igual a
 `Municipality`. Para essa análise, serão consideradas apenas as remoções
-e o ano até $2024$. Nesse caso, vamos transformar os dados de
+e o ano até $`2024`$. Nesse caso, vamos transformar os dados de
 `emission_quantity` para valores positivos de remoções.
 
 ``` r
@@ -245,19 +245,19 @@ tab_stat
 #>  1  2021 AF           50332051.  773500145.           65.1
 #>  2  2021 AMZ         781794475. 4863993091.          161. 
 #>  3  2021 CAAT         12417626.  202668507.           61.3
-#>  4  2021 CERR        240879170. 1667710663.          144. 
+#>  4  2021 CERR        240920154. 1668431756.          144. 
 #>  5  2021 PMP          32271138.  168243184.          192. 
 #>  6  2021 PNT          33861455.  214433404.          158. 
 #>  7  2022 AF          501203201. 1573907747.          318. 
 #>  8  2022 AMZ        1715879494. 4929796265.          348. 
 #>  9  2022 CAAT        516414784. 1413441928.          365. 
-#> 10  2022 CERR        894385833. 2315684868.          386. 
+#> 10  2022 CERR        894494730. 2316405961.          386. 
 #> 11  2022 PMP          43612245.  179011937.          244. 
 #> 12  2022 PNT          80814206.  214025159.          378. 
 #> 13  2023 AF           89621261. 1500091514.           59.7
 #> 14  2023 AMZ        1078061040. 5146429396.          209. 
 #> 15  2023 CAAT         70465080.  794201030.           88.7
-#> 16  2023 CERR        485991296. 2437592221.          199. 
+#> 16  2023 CERR        486105862. 2438313313.          199. 
 #> 17  2023 PMP           4964424.   77631575.           63.9
 #> 18  2023 PNT          57668709.  194082613.          297.
 ```
@@ -285,7 +285,10 @@ municipality |>
   ggplot() +
   geom_sf(aes(fill=emissions_quantity), color="transparent",
              size=.05, show.legend = TRUE) +
-  scale_fill_viridis_c() +
+  scale_fill_viridis_c(
+    limits = c(0, 10),   # mesma escala
+      # oob = scales::squish   # evita que valores fora da faixa quebrem
+  ) +
   labs(title = .x,
        fill = "Removals") +
   graph_theme()}
@@ -395,9 +398,9 @@ tab_stat
 #> # A tibble: 3 × 10
 #>    year    Sum  Mean Median    SD     SSE   Min   Max   Skw   Krt
 #>   <dbl>  <dbl> <dbl>  <dbl> <dbl>   <dbl> <dbl> <dbl> <dbl> <dbl>
-#> 1  2021  5353. 0.201 0.123  0.355 0.00215     0  5.28  7.87  85.7
-#> 2  2022 27687. 0.439 0.288  0.813 0.00319     0 20.5  13.9  282. 
-#> 3  2023  8066. 0.160 0.0887 0.370 0.00164     0  8.29 14.1  272.
+#> 1  2021  5354. 0.201 0.123  0.354 0.00215     0  5.28  7.87  85.8
+#> 2  2022 27689. 0.439 0.288  0.813 0.00319     0 20.5  13.9  282. 
+#> 3  2023  8068. 0.160 0.0888 0.370 0.00164     0  8.29 14.1  272.
 ```
 
 Gráfico das remoções por ha
@@ -997,7 +1000,7 @@ emission_sources_removals_ha |>
 #> 1 AF              0.602 0        61848
 #> 2 AMZ             0.579 0        16668
 #> 3 CAAT            0.688 0        25932
-#> 4 CERR            0.733 0        34812
+#> 4 CERR            0.733 0        34848
 #> 5 PMP             0.643 0         3744
 #> 6 PNT             0.694 1.16e-49   336
 ```
